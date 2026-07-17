@@ -104,25 +104,56 @@ class HumbleChuckSiteStack(Stack):
         )
 
         if enable_domain:
-            for record_name in [domain_name, f"www.{domain_name}"]:
-                route53.ARecord(
-                    self,
-                    f"Alias{record_name.replace('.', '')}",
-                    zone=zone,
-                    record_name=record_name,
-                    target=route53.RecordTarget.from_alias(
-                        targets.CloudFrontTarget(distribution)
-                    ),
-                )
+            cloudfront_target = route53.RecordTarget.from_alias(
+                targets.CloudFrontTarget(distribution)
+            )
+            route53.ARecord(
+                self,
+                "ApexWebRecord",
+                zone=zone,
+                record_name=domain_name,
+                target=cloudfront_target,
+            )
+            route53.ARecord(
+                self,
+                "WwwWebRecord",
+                zone=zone,
+                record_name=f"www.{domain_name}",
+                target=cloudfront_target,
+            )
+            for construct_id, record_name in [
+                ("ApexIpv6Record", domain_name),
+                ("WwwIpv6Record", f"www.{domain_name}"),
+            ]:
                 route53.AaaaRecord(
                     self,
-                    f"AliasV6{record_name.replace('.', '')}",
+                    construct_id,
                     zone=zone,
                     record_name=record_name,
-                    target=route53.RecordTarget.from_alias(
-                        targets.CloudFrontTarget(distribution)
-                    ),
+                    target=cloudfront_target,
                 )
+        else:
+            route53.ARecord(
+                self,
+                "ApexWebRecord",
+                zone=zone,
+                record_name=domain_name,
+                target=route53.RecordTarget.from_ip_addresses(
+                    "198.185.159.145",
+                    "198.49.23.144",
+                    "198.49.23.145",
+                    "198.185.159.144",
+                ),
+                ttl=Duration.minutes(5),
+            )
+            route53.CnameRecord(
+                self,
+                "WwwWebRecord",
+                zone=zone,
+                record_name=f"www.{domain_name}",
+                domain_name="ext-sq.squarespace.com",
+                ttl=Duration.minutes(5),
+            )
 
         s3deploy.BucketDeployment(
             self,

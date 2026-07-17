@@ -47,3 +47,4 @@ Most copy and project links live in `site_src/content.json`. Layout and metadata
 - The S3 bucket is retained if the CloudFormation stack is deleted, preventing accidental loss.
 - The domain flag starts off disabled so CloudFormation does not wait for certificate validation before the nameserver cutover.
 - Existing non-web DNS records are preserved in Route 53 before the nameserver cutover.
+- Until the custom domain is enabled, Route 53 mirrors the existing Squarespace web records to avoid downtime during nameserver propagation.

@@ -3,9 +3,8 @@
   "context": {
     "domain_name": "humblechuck.com",
     "github_repository": "schlinkertc/humblechuck.com",
-    "enable_domain": false,
+    "enable_domain": true,
     "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true,
     "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true
   }
 }
-

@@ -1,0 +1,112 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: One-time trust setup allowing humblechuck.com main to deploy through GitHub Actions.
+
+Parameters:
+  GitHubOwner:
+    Type: String
+    Default: schlinkertc
+  GitHubRepository:
+    Type: String
+    Default: humblechuck.com
+  DeployRegion:
+    Type: String
+    Default: us-east-1
+
+Resources:
+  GitHubOidcProvider:
+    Type: AWS::IAM::OIDCProvider
+    Properties:
+      Url: https://token.actions.githubusercontent.com
+      ClientIdList:
+        - sts.amazonaws.com
+      Tags:
+        - Key: Project
+          Value: humblechuck.com
+
+  GitHubBootstrapRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: humblechuck-github-actions
+      Description: Bootstraps CDK and delegates deployments from humblechuck.com main.
+      MaxSessionDuration: 3600
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Federated: !Ref GitHubOidcProvider
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                token.actions.githubusercontent.com:aud: sts.amazonaws.com
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOwner}/${GitHubRepository}:ref:refs/heads/main
+      Policies:
+        - PolicyName: BootstrapAndDelegateToCdk
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ReadBootstrapVersion
+                Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                  - ssm:PutParameter
+                Resource: !Sub arn:${AWS::Partition}:ssm:${DeployRegion}:${AWS::AccountId}:parameter/cdk-bootstrap/hnb659fds/version
+              - Sid: ManageBootstrapStack
+                Effect: Allow
+                Action: cloudformation:*
+                Resource: !Sub arn:${AWS::Partition}:cloudformation:${DeployRegion}:${AWS::AccountId}:stack/CDKToolkit/*
+              - Sid: ReadStacks
+                Effect: Allow
+                Action:
+                  - cloudformation:DescribeStacks
+                  - cloudformation:ListStacks
+                  - cloudformation:GetTemplate
+                Resource: "*"
+              - Sid: ManageBootstrapRoles
+                Effect: Allow
+                Action:
+                  - iam:AttachRolePolicy
+                  - iam:CreatePolicy
+                  - iam:CreateRole
+                  - iam:DeletePolicy
+                  - iam:DeleteRole
+                  - iam:DeleteRolePolicy
+                  - iam:DetachRolePolicy
+                  - iam:GetPolicy
+                  - iam:GetPolicyVersion
+                  - iam:GetRole
+                  - iam:GetRolePolicy
+                  - iam:ListAttachedRolePolicies
+                  - iam:ListPolicyVersions
+                  - iam:ListRolePolicies
+                  - iam:PassRole
+                  - iam:PutRolePolicy
+                  - iam:TagRole
+                  - iam:UntagRole
+                  - iam:UpdateAssumeRolePolicy
+                Resource:
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-*
+                  - !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:policy/cdk-hnb659fds-*
+              - Sid: ManageBootstrapAssets
+                Effect: Allow
+                Action: s3:*
+                Resource:
+                  - !Sub arn:${AWS::Partition}:s3:::cdk-hnb659fds-assets-${AWS::AccountId}-${DeployRegion}
+                  - !Sub arn:${AWS::Partition}:s3:::cdk-hnb659fds-assets-${AWS::AccountId}-${DeployRegion}/*
+              - Sid: ManageBootstrapContainerAssets
+                Effect: Allow
+                Action: ecr:*
+                Resource: !Sub arn:${AWS::Partition}:ecr:${DeployRegion}:${AWS::AccountId}:repository/cdk-hnb659fds-container-assets-${AWS::AccountId}-${DeployRegion}
+              - Sid: AuthenticateEcr
+                Effect: Allow
+                Action: ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: DelegateToCdkRoles
+                Effect: Allow
+                Action: sts:AssumeRole
+                Resource: !Sub arn:${AWS::Partition}:iam::${AWS::AccountId}:role/cdk-hnb659fds-*
+
+Outputs:
+  GitHubDeployRoleArn:
+    Description: Set this as the AWS_DEPLOY_ROLE_ARN GitHub repository variable.
+    Value: !GetAtt GitHubBootstrapRole.Arn

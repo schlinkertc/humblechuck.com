@@ -1,0 +1,11 @@
+{
+  "app": "python app.py",
+  "context": {
+    "domain_name": "humblechuck.com",
+    "github_repository": "schlinkertc/humblechuck.com",
+    "enable_domain": false,
+    "@aws-cdk/aws-s3:serverAccessLogsUseBucketPolicy": true,
+    "@aws-cdk/aws-cloudfront:defaultSecurityPolicyTLSv1.2_2021": true
+  }
+}
+

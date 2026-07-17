@@ -38,12 +38,12 @@ jobs:
           fi
       - name: Ensure CDK is bootstrapped
         run: >-
-          npx --yes aws-cdk@2.1131.0 bootstrap
+          uv run npx --yes aws-cdk@2.1131.0 bootstrap
           aws://${{ vars.AWS_ACCOUNT_ID }}/us-east-1
           --cloudformation-execution-policies arn:aws:iam::aws:policy/AdministratorAccess
       - name: Deploy site
         run: >-
-          npx --yes aws-cdk@2.1131.0 deploy HumbleChuckSite
+          uv run npx --yes aws-cdk@2.1131.0 deploy HumbleChuckSite
           --require-approval never
           -c account=${{ vars.AWS_ACCOUNT_ID }}
           -c region=us-east-1

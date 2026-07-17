@@ -46,3 +46,4 @@ Most copy and project links live in `site_src/content.json`. Layout and metadata
 - The deployment workflow refuses to run unless AWS confirms account `559681045665`, preventing an accidental deployment to the configured work account.
 - The S3 bucket is retained if the CloudFormation stack is deleted, preventing accidental loss.
 - The domain flag starts off disabled so CloudFormation does not wait for certificate validation before the nameserver cutover.
+- Existing non-web DNS records are preserved in Route 53 before the nameserver cutover.

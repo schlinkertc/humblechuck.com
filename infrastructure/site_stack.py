@@ -49,6 +49,14 @@ class HumbleChuckSiteStack(Stack):
             zone_name=domain_name,
             comment="DNS for humblechuck.com; registrar remains at Squarespace.",
         )
+        route53.TxtRecord(
+            self,
+            "OpenAIDomainVerification",
+            zone=zone,
+            record_name=domain_name,
+            values=["openai-domain-verification=dv-xgPlu6q663J6QawEyVMPKzCR"],
+            ttl=Duration.minutes(5),
+        )
 
         certificate = None
         aliases = None

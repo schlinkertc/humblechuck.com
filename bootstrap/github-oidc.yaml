@@ -5,9 +5,15 @@ Parameters:
   GitHubOwner:
     Type: String
     Default: schlinkertc
+  GitHubOwnerId:
+    Type: String
+    Default: "46359234"
   GitHubRepository:
     Type: String
     Default: humblechuck.com
+  GitHubRepositoryId:
+    Type: String
+    Default: "1304331606"
   DeployRegion:
     Type: String
     Default: us-east-1
@@ -39,7 +45,7 @@ Resources:
             Condition:
               StringEquals:
                 token.actions.githubusercontent.com:aud: sts.amazonaws.com
-                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOwner}/${GitHubRepository}:ref:refs/heads/main
+                token.actions.githubusercontent.com:sub: !Sub repo:${GitHubOwner}@${GitHubOwnerId}/${GitHubRepository}@${GitHubRepositoryId}:ref:refs/heads/main
       Policies:
         - PolicyName: BootstrapAndDelegateToCdk
           PolicyDocument:

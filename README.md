@@ -29,7 +29,7 @@ uv run pytest
 
 No site or infrastructure deployment runs from a local machine.
 
-1. In the personal AWS account, open CloudFormation in `us-east-1`, choose **Create stack → With new resources**, and upload `bootstrap/github-oidc.yaml`. Name the stack `humblechuck-github-trust`, acknowledge the IAM capability, and create it. This one-time console step establishes trust; it does not deploy the site.
+1. In the personal AWS account, open CloudFormation in `us-east-1`, choose **Create stack → With new resources**, and upload `bootstrap/github-oidc.yaml`. Name the stack `humblechuck-github-trust`, keep the personal GitHub owner/repository names and immutable IDs supplied by the template, acknowledge the IAM capability, and create it. This one-time console step establishes trust; it does not deploy the site.
 2. Copy the stack's `GitHubDeployRoleArn` output into a GitHub repository variable named `AWS_DEPLOY_ROLE_ARN`. Add `AWS_ACCOUNT_ID=559681045665` and `ENABLE_DOMAIN=false` as two more repository variables.
 3. Push to `main`. GitHub Actions bootstraps CDK inside AWS, tests the site, and deploys the first CloudFront URL. No local AWS deployment command is needed.
 4. Copy the four `NameServer` values from the `HumbleChuckSite` CloudFormation stack outputs. In Squarespace Domains, replace the domain's custom nameservers with those Route 53 nameservers. Do not remove or transfer the registration.

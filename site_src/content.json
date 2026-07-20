@@ -1,6 +1,10 @@
 {
   "name": "Charlie Schlinkert",
   "email": "schlinkertc@gmail.com",
+  "contact": {
+    "headline": "Say hello.",
+    "introduction": "For data work, music, collaboration, or a good conversation—send me a note."
+  },
   "home": {
     "headline": "Two practices. One point of view.",
     "introduction": "I’m Charlie—a data scientist and active musician. I build useful systems and make music, often with the same instincts: listen closely, find the structure, and make it feel alive."

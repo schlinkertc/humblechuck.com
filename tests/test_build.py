@@ -23,11 +23,13 @@ def test_build_creates_deployable_site():
     index = (OUTPUT / "index.html").read_text(encoding="utf-8")
     data = (OUTPUT / "data" / "index.html").read_text(encoding="utf-8")
     music = (OUTPUT / "music" / "index.html").read_text(encoding="utf-8")
+    contact = (OUTPUT / "contact" / "index.html").read_text(encoding="utf-8")
     assert "Charlie Schlinkert" in index
     assert "$headline" not in index
     assert 'id="main"' in index
     assert 'href="/data"' in index
     assert 'href="/music"' in index
+    assert 'href="/contact"' in index
     assert 'href="/favicon.ico"' in index
     assert 'src="/hc-logo.png"' in index
     assert "Useful systems for messy questions." in data
@@ -36,6 +38,9 @@ def test_build_creates_deployable_site():
     assert "Songs I’ve" in music
     assert "open.spotify.com/embed/playlist/4XeFzR948Yyk1X4SsXXogr" in music
     assert 'title="Spotify playlist: Songs Charlie Schlinkert has played on"' in music
+    assert "schlinkertc@gmail.com" in contact
+    assert 'href="mailto:schlinkertc@gmail.com"' in contact
+    assert 'aria-current="page" href="/contact"' in contact
 
 
 def test_content_has_valid_card_links():

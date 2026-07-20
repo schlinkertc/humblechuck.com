@@ -70,14 +70,24 @@ def build() -> Path:
             "cards": render_cards(content["music"]["cards"]),
         },
     )
+    contact = render_template(
+        "contact.html",
+        {
+            **shared,
+            "headline": escape(content["contact"]["headline"]),
+            "introduction": escape(content["contact"]["introduction"]),
+        },
+    )
 
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
     (OUTPUT / "data").mkdir(parents=True)
     (OUTPUT / "music").mkdir(parents=True)
+    (OUTPUT / "contact").mkdir(parents=True)
     (OUTPUT / "index.html").write_text(home, encoding="utf-8")
     (OUTPUT / "data" / "index.html").write_text(data, encoding="utf-8")
     (OUTPUT / "music" / "index.html").write_text(music, encoding="utf-8")
+    (OUTPUT / "contact" / "index.html").write_text(contact, encoding="utf-8")
 
     not_found = f"""<!doctype html>
 <html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
@@ -106,6 +116,7 @@ def build() -> Path:
         '<url><loc>https://humblechuck.com/</loc></url>'
         '<url><loc>https://humblechuck.com/data</loc></url>'
         '<url><loc>https://humblechuck.com/music</loc></url>'
+        '<url><loc>https://humblechuck.com/contact</loc></url>'
         '</urlset>\n',
         encoding="utf-8",
     )

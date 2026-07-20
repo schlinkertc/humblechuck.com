@@ -99,6 +99,18 @@ h2 { margin: 0; font-size: clamp(2.6rem, 6vw, 5.8rem); line-height: .98; letter-
 .cross-link a:hover span { transform: translateX(.3em); }
 .cross-music { background: var(--orange); }
 .cross-data { background: var(--acid); }
+.contact-hero { min-height: calc(100svh - 88px); display: flex; flex-direction: column; padding-block: clamp(3rem, 8vw, 7rem) 2rem; }
+.contact-heading { display: grid; grid-template-columns: 2fr 1fr; gap: 2rem; align-items: end; margin: 1.5rem 0 clamp(4rem, 10vw, 9rem); }
+.contact-heading h1 { margin: 0; font-size: clamp(5rem, 14vw, 13rem); line-height: .8; letter-spacing: -.08em; font-weight: 500; }
+.contact-heading p { max-width: 36ch; margin: 0; font-size: clamp(1.05rem, 1.7vw, 1.35rem); line-height: 1.55; }
+.contact-email { position: relative; margin-top: auto; display: grid; grid-template-columns: minmax(7rem, 1fr) minmax(0, 3fr) auto; align-items: center; gap: 1.5rem; padding: clamp(2rem, 4vw, 3.5rem); background: var(--ink); color: var(--paper); text-decoration: none; overflow: hidden; }
+.contact-accent { position: absolute; inset: 0 0 auto; height: 8px; display: grid; grid-template-columns: 1fr 1fr; }
+.contact-accent i:first-child { background: var(--acid); }
+.contact-accent i:last-child { background: var(--orange); }
+.contact-email strong { min-width: 0; font: 500 clamp(1.6rem, 4.4vw, 4.8rem)/1 var(--sans); letter-spacing: -.05em; }
+.contact-arrow { display: grid; place-items: center; width: clamp(3rem, 5vw, 4.5rem); aspect-ratio: 1; border: 1px solid currentColor; border-radius: 50%; font-size: clamp(1.2rem, 2.2vw, 2rem); transition: transform .25s, background .25s, color .25s; }
+.contact-email:hover strong, .contact-email:focus-visible strong { color: var(--acid); }
+.contact-email:hover .contact-arrow, .contact-email:focus-visible .contact-arrow { transform: rotate(45deg); background: var(--paper); color: var(--ink); }
 footer { display: flex; justify-content: space-between; gap: 1rem; padding-block: 2rem; font: .68rem var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .not-found { min-height: 70vh; display: grid; place-content: center; text-align: center; }
 .not-found h1 { font-size: clamp(3rem, 8vw, 7rem); letter-spacing: -.06em; margin: 1rem 0 2rem; }
@@ -119,6 +131,12 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding-block
   .portal .data-grid i { background: repeating-linear-gradient(to top, var(--bar-color) 0 5px, transparent 5px 8px); }
   .home-intro, .section-heading, .about, .playlist { grid-template-columns: 1fr; }
   .page-hero { min-height: calc(100svh - 74px); }
+  .contact-hero { min-height: calc(100svh - 74px); }
+  .contact-heading { grid-template-columns: 1fr; align-items: start; }
+  .contact-heading h1 { font-size: clamp(4.5rem, 23vw, 7.5rem); }
+  .contact-email { grid-template-columns: 1fr auto; gap: 1.25rem; padding: 2rem 1.25rem; }
+  .contact-email .eyebrow { grid-column: 1 / -1; }
+  .contact-email strong { font-size: clamp(1.35rem, 6.6vw, 2rem); letter-spacing: -.04em; overflow-wrap: anywhere; }
   .page-hero h1 { margin-bottom: 2.2rem; }
   .cards.two-up { grid-template-columns: 1fr; }
   .card { min-height: 300px; border-right: 0; border-bottom: 1px solid var(--line); padding-inline: 0; }

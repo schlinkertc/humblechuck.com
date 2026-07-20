@@ -1,31 +1,49 @@
 {
   "name": "Charlie Schlinkert",
-  "headline": "Data, software, and music—with the human part left in.",
-  "introduction": "I’m Charlie: a data scientist, lifelong musician, and proud father. I like turning messy questions into useful systems, then explaining them in plain English.",
-  "about": "My path has moved through jazz clubs, operations floors, sales teams, and data platforms. The through-line is curiosity: learn the system, find the rhythm, and make the work clearer for the people around it.",
   "email": "schlinkertc@gmail.com",
-  "cards": [
-    {
-      "eyebrow": "01 / Build",
-      "title": "Data & software",
-      "body": "Python, analytics, machine learning, and the infrastructure that makes good ideas dependable.",
-      "url": "https://github.com/schlinkertc",
-      "link": "Explore GitHub"
-    },
-    {
-      "eyebrow": "02 / Think",
-      "title": "Notes & experiments",
-      "body": "Projects, technical write-ups, and occasional investigations into things I’m curious about.",
-      "url": "https://schlinkertc.github.io/",
-      "link": "Read the blog"
-    },
-    {
-      "eyebrow": "03 / Play",
-      "title": "Music",
-      "body": "Before data, there were drums and vibraphone—six years recording and touring with Del Water Gap, and music still made whenever possible.",
-      "url": "https://www.youtube.com/results?search_query=Del+Water+Gap+Mahogany+Sessions",
-      "link": "Listen in"
-    }
-  ]
+  "home": {
+    "headline": "Two practices. One point of view.",
+    "introduction": "I’m Charlie—a data scientist and active musician. I build useful systems and make music, often with the same instincts: listen closely, find the structure, and make it feel alive."
+  },
+  "data": {
+    "headline": "Useful systems for messy questions.",
+    "introduction": "I work across data science, analytics, machine learning, and software—turning ambiguity into tools people can understand and depend on.",
+    "cards": [
+      {
+        "eyebrow": "01 / Build",
+        "title": "Code & projects",
+        "body": "Python, analysis, machine learning, and the infrastructure that helps good ideas hold up in the real world.",
+        "url": "https://github.com/schlinkertc",
+        "link": "Explore GitHub"
+      },
+      {
+        "eyebrow": "02 / Think",
+        "title": "Notes & experiments",
+        "body": "Technical write-ups, project notebooks, and occasional investigations into questions worth following.",
+        "url": "https://schlinkertc.github.io/",
+        "link": "Read the blog"
+      }
+    ]
+  },
+  "music": {
+    "headline": "Music is a present-tense practice.",
+    "introduction": "I’m a drummer, vibraphonist, songwriter, and arranger. Music isn’t a former chapter—it’s an active part of how I work, listen, and move through the world.",
+    "about": "I studied jazz at NYU and co-founded Del Water Gap, spending six years recording and touring with the band. I continue to write, play, arrange, and follow the next good sound.",
+    "cards": [
+      {
+        "eyebrow": "01 / Listen",
+        "title": "Del Water Gap",
+        "body": "Recordings and live sessions from the band’s early years, with me behind the drums and elsewhere in the arrangements.",
+        "url": "https://www.youtube.com/results?search_query=Del+Water+Gap+Mahogany+Sessions",
+        "link": "Watch a session"
+      },
+      {
+        "eyebrow": "02 / Connect",
+        "title": "Make something",
+        "body": "For playing, writing, arranging, recording, or simply talking music, I’m always happy to hear what you’re working on.",
+        "url": "mailto:schlinkertc@gmail.com?subject=Music",
+        "link": "Get in touch"
+      }
+    ]
+  }
 }
-

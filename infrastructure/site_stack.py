@@ -86,6 +86,27 @@ class HumbleChuckSiteStack(Stack):
                 cached_methods=cloudfront.CachedMethods.CACHE_GET_HEAD_OPTIONS,
                 compress=True,
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
+                function_associations=[
+                    cloudfront.FunctionAssociation(
+                        function=cloudfront.Function(
+                            self,
+                            "CleanUrlRewrite",
+                            code=cloudfront.FunctionCode.from_inline(
+                                """function handler(event) {
+  var request = event.request;
+  var uri = request.uri;
+  if (uri.endsWith('/')) {
+    request.uri += 'index.html';
+  } else if (!uri.split('/').pop().includes('.')) {
+    request.uri += '/index.html';
+  }
+  return request;
+}"""
+                            ),
+                        ),
+                        event_type=cloudfront.FunctionEventType.VIEWER_REQUEST,
+                    )
+                ],
             ),
             error_responses=[
                 cloudfront.ErrorResponse(

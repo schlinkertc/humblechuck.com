@@ -22,30 +22,68 @@ def render_cards(cards):
     )
 
 
+def common_values(content):
+    return {
+        "name": escape(content["name"]),
+        "email": escape(content["email"]),
+        "email_url": escape(f"mailto:{content['email']}", quote=True),
+    }
+
+
+def render_template(name, values):
+    template = Template((SOURCE / name).read_text(encoding="utf-8"))
+    return template.substitute(values)
+
+
 def build() -> Path:
     content = json.loads((SOURCE / "content.json").read_text(encoding="utf-8"))
-    template = Template((SOURCE / "index.html").read_text(encoding="utf-8"))
-    html = template.substitute(
-        name=escape(content["name"]),
-        headline=escape(content["headline"]),
-        introduction=escape(content["introduction"]),
-        about=escape(content["about"]),
-        email=escape(content["email"]),
-        email_url=escape(f"mailto:{content['email']}", quote=True),
-        cards=render_cards(content["cards"]),
+    shared = common_values(content)
+
+    home = render_template(
+        "index.html",
+        {
+            **shared,
+            "headline": escape(content["home"]["headline"]),
+            "introduction": escape(content["home"]["introduction"]),
+        },
+    )
+    data = render_template(
+        "data.html",
+        {
+            **shared,
+            "headline": escape(content["data"]["headline"]),
+            "introduction": escape(content["data"]["introduction"]),
+            "cards": render_cards(content["data"]["cards"]),
+        },
+    )
+    music = render_template(
+        "music.html",
+        {
+            **shared,
+            "headline": escape(content["music"]["headline"]),
+            "introduction": escape(content["music"]["introduction"]),
+            "about": escape(content["music"]["about"]),
+            "cards": render_cards(content["music"]["cards"]),
+        },
     )
 
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
-    OUTPUT.mkdir(parents=True)
-    (OUTPUT / "index.html").write_text(html, encoding="utf-8")
+    (OUTPUT / "data").mkdir(parents=True)
+    (OUTPUT / "music").mkdir(parents=True)
+    (OUTPUT / "index.html").write_text(home, encoding="utf-8")
+    (OUTPUT / "data" / "index.html").write_text(data, encoding="utf-8")
+    (OUTPUT / "music" / "index.html").write_text(music, encoding="utf-8")
+
     not_found = f"""<!doctype html>
 <html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
 <title>Page not found — {escape(content['name'])}</title><link rel=\"stylesheet\" href=\"/styles.css\"></head>
 <body><main id=\"main\"><section class=\"not-found\"><p class=\"eyebrow\">404</p><h1>That page wandered off.</h1><p><a href=\"/\">Head home</a></p></section></main></body></html>"""
     (OUTPUT / "404.html").write_text(not_found, encoding="utf-8")
-    shutil.copy2(SOURCE / "styles.css", OUTPUT / "styles.css")
-    shutil.copy2(SOURCE / "site.js", OUTPUT / "site.js")
+    for asset in ("styles.css", "site.js", "og.png"):
+        source_asset = SOURCE / asset
+        if source_asset.exists():
+            shutil.copy2(source_asset, OUTPUT / asset)
     (OUTPUT / "robots.txt").write_text(
         "User-agent: *\nAllow: /\nSitemap: https://humblechuck.com/sitemap.xml\n",
         encoding="utf-8",
@@ -53,7 +91,10 @@ def build() -> Path:
     (OUTPUT / "sitemap.xml").write_text(
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'
-        '<url><loc>https://humblechuck.com/</loc></url></urlset>\n',
+        '<url><loc>https://humblechuck.com/</loc></url>'
+        '<url><loc>https://humblechuck.com/data</loc></url>'
+        '<url><loc>https://humblechuck.com/music</loc></url>'
+        '</urlset>\n',
         encoding="utf-8",
     )
     return OUTPUT

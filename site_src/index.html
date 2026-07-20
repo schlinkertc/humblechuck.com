@@ -3,64 +3,62 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="Charlie Schlinkert is a data scientist, software builder, musician, and proud father.">
+    <meta name="description" content="$introduction">
     <meta name="theme-color" content="#f2efe6">
-    <meta property="og:title" content="$name">
+    <meta property="og:title" content="$name — Data & Music">
     <meta property="og:description" content="$headline">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://humblechuck.com/">
-    <title>$name — Data, software & music</title>
+    <meta property="og:image" content="https://humblechuck.com/og.png">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://humblechuck.com/og.png">
+    <title>$name — Data & Music</title>
     <link rel="stylesheet" href="/styles.css">
     <script src="/site.js" defer></script>
   </head>
-  <body>
-    <a class="skip-link" href="#main">Skip to content</a>
-    <header class="site-header">
+  <body class="home-page">
+    <a class="skip-link" href="#main">Skip to choices</a>
+    <header class="site-header home-header">
       <a class="wordmark" href="/" aria-label="$name, home">
         <span class="mark" aria-hidden="true">HC</span>
         <span>$name</span>
       </a>
-      <nav aria-label="Primary navigation">
-        <a href="#work">Work</a>
-        <a href="#about">About</a>
-        <a class="nav-contact" href="$email_url">Say hello</a>
-      </nav>
+      <a class="nav-contact" href="$email_url">Say hello</a>
     </header>
 
-    <main id="main">
-      <section class="hero" aria-labelledby="hero-title">
-        <p class="eyebrow">Brooklyn, New York · Available on the internet</p>
-        <h1 id="hero-title">$headline</h1>
-        <div class="hero-foot">
-          <p>$introduction</p>
-          <a class="round-link" href="#work" aria-label="See selected work"><span aria-hidden="true">↓</span></a>
-        </div>
-        <div class="signal" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-      </section>
+    <main id="main" class="portal-grid" aria-label="Choose a side of Charlie's work">
+      <a class="portal portal-data" href="/data" aria-label="Explore Charlie's data work">
+        <span class="portal-top">
+          <span class="eyebrow">01 / Data</span>
+          <span class="portal-arrow" aria-hidden="true">↗</span>
+        </span>
+        <span class="portal-center">
+          <strong>Data</strong>
+          <span>Models, platforms,<br>and practical analysis.</span>
+        </span>
+        <span class="data-grid" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      </a>
 
-      <section class="work" id="work" aria-labelledby="work-title">
-        <div class="section-heading">
-          <p class="eyebrow">Selected channels</p>
-          <h2 id="work-title">A few places<br>to start.</h2>
-        </div>
-        <div class="cards">$cards</div>
-      </section>
-
-      <section class="about" id="about" aria-labelledby="about-title">
-        <p class="eyebrow">The short version</p>
-        <div>
-          <h2 id="about-title">Curiosity is the through-line.</h2>
-          <p>$about</p>
-          <a href="https://www.linkedin.com/in/charlie-schlinkert-31126097/">The longer version is on LinkedIn<span aria-hidden="true"> ↗</span></a>
-        </div>
-      </section>
-
-      <section class="contact" aria-labelledby="contact-title">
-        <p class="eyebrow">Good conversations welcome</p>
-        <h2 id="contact-title">Have a problem worth thinking about?</h2>
-        <a href="$email_url">$email<span aria-hidden="true"> ↗</span></a>
-      </section>
+      <a class="portal portal-music" href="/music" aria-label="Explore Charlie's music">
+        <span class="portal-top">
+          <span class="eyebrow">02 / Music</span>
+          <span class="portal-arrow" aria-hidden="true">↗</span>
+        </span>
+        <span class="portal-center">
+          <strong>Music</strong>
+          <span>Drums, vibraphone,<br>writing, and arranging.</span>
+        </span>
+        <span class="signal portal-signal" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span>
+      </a>
     </main>
+
+    <section class="home-intro" aria-labelledby="home-title">
+      <p class="eyebrow">Brooklyn, New York</p>
+      <div>
+        <h1 id="home-title">$headline</h1>
+        <p>$introduction</p>
+      </div>
+    </section>
 
     <footer>
       <span>© <span data-year></span> $name</span>
@@ -68,4 +66,3 @@
     </footer>
   </body>
 </html>
-

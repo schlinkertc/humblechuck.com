@@ -12,6 +12,10 @@ def test_build_creates_deployable_site():
         "styles.css",
         "site.js",
         "og.png",
+        "hc-logo.png",
+        "favicon.ico",
+        "favicon-32.png",
+        "apple-touch-icon.png",
         "robots.txt",
         "sitemap.xml",
     }
@@ -24,6 +28,8 @@ def test_build_creates_deployable_site():
     assert 'id="main"' in index
     assert 'href="/data"' in index
     assert 'href="/music"' in index
+    assert 'href="/favicon.ico"' in index
+    assert 'src="/hc-logo.png"' in index
     assert "Useful systems for messy questions." in data
     assert "Music is a present-tense practice." in music
     assert "something I used to do" not in music

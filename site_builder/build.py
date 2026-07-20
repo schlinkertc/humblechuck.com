@@ -81,10 +81,18 @@ def build() -> Path:
 
     not_found = f"""<!doctype html>
 <html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
-<title>Page not found — {escape(content['name'])}</title><link rel=\"stylesheet\" href=\"/styles.css\"></head>
+<title>Page not found — {escape(content['name'])}</title><link rel=\"icon\" href=\"/favicon.ico\" sizes=\"any\"><link rel=\"icon\" type=\"image/png\" sizes=\"32x32\" href=\"/favicon-32.png\"><link rel=\"stylesheet\" href=\"/styles.css\"></head>
 <body><main id=\"main\"><section class=\"not-found\"><p class=\"eyebrow\">404</p><h1>That page wandered off.</h1><p><a href=\"/\">Head home</a></p></section></main></body></html>"""
     (OUTPUT / "404.html").write_text(not_found, encoding="utf-8")
-    for asset in ("styles.css", "site.js", "og.png"):
+    for asset in (
+        "styles.css",
+        "site.js",
+        "og.png",
+        "hc-logo.png",
+        "favicon.ico",
+        "favicon-32.png",
+        "apple-touch-icon.png",
+    ):
         source_asset = SOURCE / asset
         if source_asset.exists():
             shutil.copy2(source_asset, OUTPUT / asset)

@@ -69,7 +69,7 @@ main:not(.portal-grid), footer, .home-intro { margin-inline: clamp(1.25rem, 4vw,
 .page-data-grid { height: 112px; }
 .page-data-grid i { background: var(--acid); }
 .page-signal { height: 94px; }
-.work, .about { border-top: 1px solid var(--ink); padding-block: clamp(4rem, 9vw, 8rem); }
+.work, .about, .playlist { border-top: 1px solid var(--ink); padding-block: clamp(4rem, 9vw, 8rem); }
 .section-heading { display: grid; grid-template-columns: 1fr 2fr; gap: 2rem; margin-bottom: clamp(3rem, 7vw, 6rem); }
 h2 { margin: 0; font-size: clamp(2.6rem, 6vw, 5.8rem); line-height: .98; letter-spacing: -.055em; font-weight: 500; }
 .cards { display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line); }
@@ -85,6 +85,13 @@ h2 { margin: 0; font-size: clamp(2.6rem, 6vw, 5.8rem); line-height: .98; letter-
 .about > div { max-width: 920px; }
 .about h2 { margin-bottom: 2.5rem; }
 .about div p { max-width: 760px; font-size: clamp(1.15rem, 1.9vw, 1.6rem); line-height: 1.55; }
+.playlist { display: grid; grid-template-columns: 1fr 2fr; gap: clamp(2rem, 6vw, 7rem); align-items: start; }
+.playlist-copy { position: sticky; top: 2rem; }
+.playlist-copy h2 { margin: 1.5rem 0 2rem; }
+.playlist-copy > p:not(.eyebrow) { max-width: 34ch; line-height: 1.6; }
+.playlist-copy > a { display: inline-block; margin-top: 1rem; }
+.spotify-frame { padding: clamp(.7rem, 1.4vw, 1.1rem); border: 1px solid var(--ink); background: var(--orange); }
+.spotify-frame iframe { display: block; width: 100%; border: 0; border-radius: 12px; background: var(--ink); }
 .cross-link { margin-inline: calc(clamp(1.25rem, 4vw, 4.5rem) * -1); padding: clamp(2.5rem, 5vw, 4.5rem) clamp(1.25rem, 4vw, 4.5rem); display: flex; align-items: center; justify-content: space-between; gap: 2rem; }
 .cross-link a { font-size: clamp(1.45rem, 3.5vw, 3.7rem); line-height: 1; letter-spacing: -.045em; text-decoration: none; }
 .cross-link a span { display: inline-block; transition: transform .2s; }
@@ -108,13 +115,16 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding-block
   .portal .data-grid, .portal .signal { position: absolute; right: 1.25rem; bottom: 1.35rem; width: 38%; height: 48px; opacity: .95; }
   .portal .data-grid { gap: 3px; }
   .portal .data-grid i { background: repeating-linear-gradient(to top, var(--bar-color) 0 5px, transparent 5px 8px); }
-  .home-intro, .section-heading, .about { grid-template-columns: 1fr; }
+  .home-intro, .section-heading, .about, .playlist { grid-template-columns: 1fr; }
   .page-hero { min-height: calc(100svh - 74px); }
   .page-hero h1 { margin-bottom: 2.2rem; }
   .cards.two-up { grid-template-columns: 1fr; }
   .card { min-height: 300px; border-right: 0; border-bottom: 1px solid var(--line); padding-inline: 0; }
   .card:last-child { border-bottom: 0; }
   .card:hover { padding-inline: 1.25rem; }
+  .playlist-copy { position: static; }
+  .spotify-frame { margin-inline: calc(clamp(1.25rem, 4vw, 4.5rem) * -0.35); }
+  .spotify-frame iframe { height: 480px; }
   .cross-link { align-items: flex-start; flex-direction: column; }
   footer { flex-direction: column; }
 }

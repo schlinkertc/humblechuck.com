@@ -27,6 +27,9 @@ def test_build_creates_deployable_site():
     assert "Useful systems for messy questions." in data
     assert "Music is a present-tense practice." in music
     assert "something I used to do" not in music
+    assert "Songs I’ve" in music
+    assert "open.spotify.com/embed/playlist/4XeFzR948Yyk1X4SsXXogr" in music
+    assert 'title="Spotify playlist: Songs Charlie Schlinkert has played on"' in music
 
 
 def test_content_has_valid_card_links():

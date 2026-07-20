@@ -63,6 +63,10 @@ def build() -> Path:
             "headline": escape(content["music"]["headline"]),
             "introduction": escape(content["music"]["introduction"]),
             "about": escape(content["music"]["about"]),
+            "playlist_url": escape(content["music"]["playlist_url"], quote=True),
+            "playlist_embed_url": escape(
+                content["music"]["playlist_embed_url"], quote=True
+            ),
             "cards": render_cards(content["music"]["cards"]),
         },
     )

@@ -1,0 +1,673 @@
+{
+  "source": "Master Show History",
+  "source_updated": "2026-07-21",
+  "note": "User-corrected Purgatory spelling and Brooklyn location on 2026-08-04.",
+  "shows": [
+    {
+      "date": "2026-05-11",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Humble Chuck — 9:30 PM"
+    },
+    {
+      "date": "2026-04-08",
+      "venue": "Purgatory",
+      "location": "Brooklyn, NY",
+      "billing": "With Wilby"
+    },
+    {
+      "date": "2026-01-15",
+      "venue": "The Paramount Hotel",
+      "location": "Times Square, New York, NY",
+      "billing": "With Clara Hannigan"
+    },
+    {
+      "date": "2025-04-29",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Humble Chuck — 9:30 PM"
+    },
+    {
+      "date": "2025-02-15",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Humble Chuck — 8:00 PM"
+    },
+    {
+      "date": "2024-12-23",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Humble Chuck — 9:30 PM"
+    },
+    {
+      "date": "2024-11-18",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Humble Chuck — 8:30 PM"
+    },
+    {
+      "date": "2024-07-20",
+      "venue": "The Sultan Room",
+      "location": "Brooklyn, NY",
+      "billing": "With Stello"
+    },
+    {
+      "date": "2024-07-17",
+      "venue": "The Sultan Room",
+      "location": "Brooklyn, NY",
+      "billing": "With Clara Hannigan"
+    },
+    {
+      "date": "2024-05-10",
+      "venue": "Our Wicked Lady",
+      "location": "Brooklyn, NY",
+      "billing": "With Stello"
+    },
+    {
+      "date": "2023-11-17",
+      "venue": "Bowery Electric",
+      "location": "New York, NY",
+      "billing": "With Stello"
+    },
+    {
+      "date": "2019-08-05",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Charlie Schlinkert — 9:30 PM"
+    },
+    {
+      "date": "2019-06-28",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Charlie Schlinkert — 10:00 PM"
+    },
+    {
+      "date": "2019-05-31",
+      "venue": "Sofar NYC HQ",
+      "location": "New York, NY",
+      "billing": "Humble Chuck"
+    },
+    {
+      "date": "2019-05-17",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Humble Chuck — 10:00 PM"
+    },
+    {
+      "date": "2019-03-22",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Humble Chuck — 11:00 PM"
+    },
+    {
+      "date": "2019-02-21",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Humble Chuck — 11:00 PM"
+    },
+    {
+      "date": "2018-12-13",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Humble Chuck — 9:00 PM"
+    },
+    {
+      "date": "2018-06-30",
+      "venue": "Hill Country",
+      "location": "New York, NY",
+      "billing": "Star Four — Lucinda Williams “Car Wheels” set + country covers"
+    },
+    {
+      "date": "2017-11-04",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Charlie Schlinkert — 8:00 PM"
+    },
+    {
+      "date": "2017-09-14",
+      "venue": "The Footlight",
+      "location": "Location not stated",
+      "billing": "Star Four"
+    },
+    {
+      "date": "2017-06-15",
+      "venue": "Berlin NYC",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2017-01-29",
+      "venue": "Sofar Sounds Philly",
+      "location": "Philadelphia, PA",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2017-01-27",
+      "venue": "Pi Lam at UPenn",
+      "location": "Philadelphia, PA",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-12-15",
+      "venue": "Webster Hall (with DYGL)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-10-21",
+      "venue": "Berlin NYC (with JIL)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-07-07",
+      "venue": "Knitting Factory",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-05-19",
+      "venue": "Niagara",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-05-07",
+      "venue": "Mercury Lounge (with STONE COLD FOX)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-03-24",
+      "venue": "Mercury Lounge (with HOWARD)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-03-04",
+      "venue": "Webster Hall (with WUSSY)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-02-25",
+      "venue": "Rockwood Music Hall",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-02-14",
+      "venue": "Rough Trade",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2016-01-14",
+      "venue": "Bowery Ballroom",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-12-16",
+      "venue": "Mercury Lounge",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-12-12",
+      "venue": "Sofar Sounds NYC",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-11-13",
+      "venue": "St. Lawrence University",
+      "location": "Canton, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-11-08",
+      "venue": "Brandeis University",
+      "location": "Waltham, MA",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-11-07",
+      "venue": "Colby College",
+      "location": "Waterville, ME",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-11-06",
+      "venue": "Union Coffee Company",
+      "location": "Milford, NH",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-10-31",
+      "venue": "Bushwick Public House",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap Halloween show"
+    },
+    {
+      "date": "2015-10-22",
+      "venue": "One Thousand Birds Studio",
+      "location": "Brooklyn, NY",
+      "billing": "Guitar-and-vibes duo with Holden Jaffe — about 8:00 PM"
+    },
+    {
+      "date": "2015-10-14",
+      "venue": "Bowery Electric (CMJ Music Marathon)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-10-06",
+      "venue": "Rockwood Music Hall (Communion Presents)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-10-03",
+      "venue": "Radio Bean",
+      "location": "Burlington, VT",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-10-02",
+      "venue": "216 Dwight at Yale",
+      "location": "New Haven, CT",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-09-24",
+      "venue": "Arlene’s Grocery (residency show)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-09-21",
+      "venue": "Pianos (Coffee Music Project)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-09-17",
+      "venue": "Arlene’s Grocery (residency show)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-09-10",
+      "venue": "Arlene’s Grocery (residency show)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-08-30",
+      "venue": "Le Poisson Rouge",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-06-20",
+      "venue": "Spring for Sound Festival",
+      "location": "Millerton, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-06-15",
+      "venue": "The Bowery Ballroom (with HONEYHONEY and Sonya Kitchell)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-06-13",
+      "venue": "The Listening Party",
+      "location": "Boston, MA",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-06-12",
+      "venue": "Mayo Performing Arts Center",
+      "location": "Morristown, NJ",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-06-11",
+      "venue": "Niagara",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-05-03",
+      "venue": "Baby’s All Right (with KIEV)",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-04-20",
+      "venue": "Mercury Lounge",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-03-27",
+      "venue": "Pianos",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-03-03",
+      "venue": "Rockwood Music Hall (Communion Presents)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-02-28",
+      "venue": "Muchmore’s",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-02-14",
+      "venue": "The Bowery Electric",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2015-02-10",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-11-24",
+      "venue": "Brooklyn Bowl (School Night)",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-11-22",
+      "venue": "Colby College",
+      "location": "Waterville, ME",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-10-25",
+      "venue": "Webster Hall (CMJ)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-10-22",
+      "venue": "Fontana’s (CMJ)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-10-12",
+      "venue": "The Aerie on Eagle Street",
+      "location": "North Adams, MA",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-10-11",
+      "venue": "University Heights Amphitheatre at UVM",
+      "location": "Burlington, VT",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-10-10",
+      "venue": "Goodrich Hall at Williams College",
+      "location": "Williamstown, MA",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-10-01",
+      "venue": "Smog at Bard College",
+      "location": "Annandale-on-Hudson, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-09-13",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-09-10",
+      "venue": "Cameo Gallery",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-08-24",
+      "venue": "Le Poisson Rouge",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-08-21",
+      "venue": "Sofar Sounds",
+      "location": "Reykjavík, Iceland",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-06-27",
+      "venue": "Friends and Lovers",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-06-14",
+      "venue": "Arlene’s Grocery",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-05-08",
+      "venue": "Vassar College (with Frankie Cosmos)",
+      "location": "Poughkeepsie, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-05-02",
+      "venue": "Drom (EP release show)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-04-27",
+      "venue": "Johns Hopkins Spring Fair",
+      "location": "Baltimore, MD",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-04-26",
+      "venue": "Millbrook School",
+      "location": "Millbrook, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-04-25",
+      "venue": "Converse Rubber Tracks",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-04-13",
+      "venue": "Webster Hall",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-03-27",
+      "venue": "Pianos",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-03-07",
+      "venue": "Muchmore’s",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-02-22",
+      "venue": "Ran Tea House",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2014-01-31",
+      "venue": "Venue not identified",
+      "location": "Location not stated",
+      "billing": "Performance confirmed by post-show email"
+    },
+    {
+      "date": "2013-11-20",
+      "venue": "Brooklyn Bowl (with YARN)",
+      "location": "Brooklyn, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-10-18",
+      "venue": "Sidewalk Café (CMJ)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-10-16",
+      "venue": "The Living Room (CMJ)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-10-05",
+      "venue": "Alchemical Theatre Laboratory",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-09-14",
+      "venue": "Sullivan Hall",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-08-25",
+      "venue": "Le Poisson Rouge",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-08-20",
+      "venue": "Sidewalk Café",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-07-04",
+      "venue": "Vermont Arts Exchange (with HONEYHONEY)",
+      "location": "Bennington, VT",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-07-03",
+      "venue": "The Aerie",
+      "location": "North Adams, MA",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-06-15",
+      "venue": "Spring for Sound Festival",
+      "location": "Millerton, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-06-08",
+      "venue": "Wild Hope Farm Festival",
+      "location": "Chester, SC",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-06-01",
+      "venue": "Yippie Museum Café",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-05-12",
+      "venue": "Drom",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-04-23",
+      "venue": "Bowery Electric",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-04-17",
+      "venue": "Sullivan Hall",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-04-14",
+      "venue": "Johns Hopkins Spring Fair",
+      "location": "Baltimore, MD",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-04-08",
+      "venue": "Alchemical Theatre",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-03-15",
+      "venue": "Knitting Factory (with The Middle Eight)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-03-01",
+      "venue": "Highline Ballroom (with YARN)",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-02-23",
+      "venue": "Sullivan Hall",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-02-17",
+      "venue": "Sullivan Hall",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2013-02-15",
+      "venue": "Lit Lounge",
+      "location": "New York, NY",
+      "billing": "Del Water Gap"
+    },
+    {
+      "date": "2012-12-05",
+      "venue": "Sullivan Hall",
+      "location": "New York, NY",
+      "billing": "Del Water Gap — about 10:30 PM"
+    },
+    {
+      "date": "2012-08-15",
+      "venue": "Toad’s Place",
+      "location": "New Haven, CT",
+      "billing": "Del Water Gap"
+    }
+  ]
+}

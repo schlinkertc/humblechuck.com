@@ -1,5 +1,6 @@
 import json
 import shutil
+from collections import defaultdict
 from datetime import date
 from html import escape
 from pathlib import Path
@@ -23,15 +24,49 @@ def render_cards(cards):
     )
 
 
-def render_past_shows(shows):
-    return "\n".join(
-        f"""<li class=\"show-row\">
-          <time datetime=\"{escape(show['date'], quote=True)}\"><span>{date.fromisoformat(show['date']).strftime('%b')}</span><strong>{date.fromisoformat(show['date']).strftime('%d')}</strong><small>{date.fromisoformat(show['date']).year}</small></time>
-          <div><h3>{escape(show['venue'])}</h3><p>{escape(show['location'])}</p></div>
-          <p>{escape(show['billing'])}</p>
+def show_artist_and_note(billing):
+    known_artists = ("Humble Chuck", "Charlie Schlinkert", "Del Water Gap", "Star Four")
+    for artist in known_artists:
+        if billing.startswith(artist):
+            note = billing[len(artist) :].lstrip(" —·")
+            return artist, note
+    if billing.startswith("With "):
+        return billing.removeprefix("With "), ""
+    if billing.startswith("Guitar-and-vibes duo with Holden Jaffe"):
+        note = billing.split("—", 1)[1].strip() if "—" in billing else "Guitar-and-vibes duo"
+        return "Charlie Schlinkert + Holden Jaffe", note
+    return "Artist not listed", billing
+
+
+def render_show(show):
+    performance_date = date.fromisoformat(show["date"])
+    artist, note = show_artist_and_note(show["billing"])
+    note_html = f'<p class="show-note">{escape(note)}</p>' if note else '<p class="show-note" aria-hidden="true"></p>'
+    return f"""<li class=\"show-row\">
+          <time datetime=\"{escape(show['date'], quote=True)}\"><span>{performance_date.strftime('%b')}</span><strong>{performance_date.strftime('%d')}</strong></time>
+          <div class=\"show-credit\"><span class=\"eyebrow\">Artist</span><h3>{escape(artist)}</h3></div>
+          <div class=\"show-credit\"><span class=\"eyebrow\">Venue</span><h3>{escape(show['venue'])}</h3><p>{escape(show['location'])}</p></div>
+          {note_html}
         </li>"""
-        for show in shows
-    )
+
+
+def render_past_shows(shows):
+    shows_by_year = defaultdict(list)
+    for show in shows:
+        shows_by_year[show["date"][:4]].append(show)
+
+    groups = []
+    for year in sorted(shows_by_year, reverse=True):
+        year_shows = shows_by_year[year]
+        count_label = f"{len(year_shows)} {'show' if len(year_shows) == 1 else 'shows'}"
+        rows = "\n".join(render_show(show) for show in year_shows)
+        groups.append(
+            f"""<details class=\"show-year\">
+          <summary><strong>{year}</strong><span>{count_label}</span><i aria-hidden=\"true\"></i></summary>
+          <ol class=\"show-list\">{rows}</ol>
+        </details>"""
+        )
+    return "\n".join(groups)
 
 
 def render_calendar(show):
@@ -83,6 +118,9 @@ def render_template(name, values):
 
 def build() -> Path:
     content = json.loads((SOURCE / "content.json").read_text(encoding="utf-8"))
+    show_history = json.loads(
+        (SOURCE / "show_history.json").read_text(encoding="utf-8")
+    )["shows"]
     shared = common_values(content)
 
     home = render_template(
@@ -147,7 +185,9 @@ def build() -> Path:
             "share_title": escape(f"{show['artist']} at {show['venue']}", quote=True),
             "share_text": escape(f"{show['artist']} at {show['venue']} — September 5, 2026 at 8 PM.", quote=True),
             "event_json": json.dumps(event_data, ensure_ascii=False).replace("<", "\\u003c"),
-            "past_shows": render_past_shows(content["music"]["past_shows"]),
+            "past_shows": render_past_shows(show_history),
+            "past_show_count": str(len(show_history)),
+            "past_show_range": f"{show_history[-1]['date'][:4]}–{show_history[0]['date'][:4]}",
             "playlist_url": escape(content["music"]["playlist_url"], quote=True),
             "playlist_embed_url": escape(
                 content["music"]["playlist_embed_url"], quote=True

@@ -53,11 +53,6 @@
           </div>
         </div>
       </section>
-      <section class="show-archive" aria-labelledby="archive-title">
-        <div class="archive-heading"><p class="eyebrow">Recent history</p><div><h2 id="archive-title">Past shows.</h2><p>A concise selection from the master show history, newest first.</p></div></div>
-        <ol class="show-list">$past_shows</ol>
-      </section>
-      <section class="about music-about" aria-labelledby="about-title"><p class="eyebrow">Still playing</p><div><h2 id="about-title">The work keeps moving.</h2><p>$about</p></div></section>
       <section class="playlist" aria-labelledby="playlist-title">
         <div class="playlist-copy">
           <p class="eyebrow">On record</p>
@@ -76,9 +71,14 @@
             allowfullscreen></iframe>
         </div>
       </section>
+      <section class="about music-about" aria-labelledby="about-title"><p class="eyebrow">Still playing</p><div><h2 id="about-title">The work keeps moving.</h2><p>$about</p></div></section>
       <section class="work" aria-labelledby="work-title">
         <div class="section-heading"><p class="eyebrow">Listen & connect</p><h2 id="work-title">Keep your ears<br>open.</h2></div>
         <div class="cards two-up">$cards</div>
+      </section>
+      <section class="show-archive" aria-labelledby="archive-title">
+        <div class="archive-heading"><p class="eyebrow">Live history / $past_show_range</p><div><h2 id="archive-title">Past shows.</h2><p>$past_show_count dated performances from the master show history. Open a year to explore.</p></div></div>
+        <div class="show-years">$past_shows</div>
       </section>
       <section class="cross-link cross-data"><p class="eyebrow">The other practice</p><a href="/data">Step into the data side <span aria-hidden="true">→</span></a></section>
     </main>

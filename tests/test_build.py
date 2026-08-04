@@ -1,7 +1,14 @@
 import json
 from pathlib import Path
 
-from site_builder.build import OUTPUT, SOURCE, build, render_cards, render_past_shows
+from site_builder.build import (
+    OUTPUT,
+    SOURCE,
+    build,
+    render_cards,
+    render_past_shows,
+    show_artist_and_note,
+)
 
 
 def test_build_creates_deployable_site():
@@ -48,8 +55,18 @@ def test_build_creates_deployable_site():
     assert 'data-share-show' in music
     assert '"@type": "MusicEvent"' in music
     assert 'content="https://humblechuck.com/music-show-og.png"' in music
-    assert "Recent history" in music
-    assert music.count('class="show-row"') == 10
+    assert "111 dated performances" in music
+    assert music.count('class="show-row"') == 111
+    assert music.count('class="show-year"') == 12
+    assert music.count('<span class="eyebrow">Artist</span>') == 111
+    assert music.count('<span class="eyebrow">Venue</span>') == 111
+    assert "Purgatory" in music
+    assert "Purgagory" not in music
+    assert "Brooklyn, NY" in music
+    assert music.index('id="upcoming"') < music.index('class="playlist"')
+    assert music.index('class="playlist"') < music.index('class="about music-about"')
+    assert music.index('class="work"') < music.index('class="show-archive"')
+    assert music.index('class="show-archive"') < music.index('class="cross-link ')
     assert "schlinkertc@gmail.com" in contact
     assert 'href="mailto:schlinkertc@gmail.com"' in contact
     assert 'aria-current="page" href="/contact"' in contact
@@ -64,12 +81,22 @@ def test_content_has_valid_card_links():
 
 
 def test_music_show_archive_and_calendar_are_rendered_from_content():
-    content = json.loads((SOURCE / "content.json").read_text(encoding="utf-8"))
-    music = content["music"]
-    archive = render_past_shows(music["past_shows"])
-    assert archive.count('class="show-row"') == len(music["past_shows"])
+    history = json.loads(
+        (SOURCE / "show_history.json").read_text(encoding="utf-8")
+    )["shows"]
+    archive = render_past_shows(history)
+    assert len(history) == 111
+    assert archive.count('class="show-row"') == len(history)
+    assert archive.count('class="show-year"') == 12
     assert "May" in archive
     assert "Pete’s Candy Store" in archive
+    assert "Purgatory" in archive
+    assert "Wilby" in archive
+    assert show_artist_and_note("Humble Chuck — 9:30 PM") == (
+        "Humble Chuck",
+        "9:30 PM",
+    )
+    assert show_artist_and_note("With Clara Hannigan") == ("Clara Hannigan", "")
 
     build()
     calendar = (OUTPUT / "humble-chuck-petes-2026-09-05.ics").read_text(

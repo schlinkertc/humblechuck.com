@@ -1,5 +1,6 @@
 import json
 import shutil
+from datetime import date
 from html import escape
 from pathlib import Path
 from string import Template
@@ -20,6 +21,51 @@ def render_cards(cards):
         </article>"""
         for card in cards
     )
+
+
+def render_past_shows(shows):
+    return "\n".join(
+        f"""<li class=\"show-row\">
+          <time datetime=\"{escape(show['date'], quote=True)}\"><span>{date.fromisoformat(show['date']).strftime('%b')}</span><strong>{date.fromisoformat(show['date']).strftime('%d')}</strong><small>{date.fromisoformat(show['date']).year}</small></time>
+          <div><h3>{escape(show['venue'])}</h3><p>{escape(show['location'])}</p></div>
+          <p>{escape(show['billing'])}</p>
+        </li>"""
+        for show in shows
+    )
+
+
+def render_calendar(show):
+    def ical_timestamp(value):
+        return value.replace("-", "").replace(":", "")[:15]
+
+    def ical_text(value):
+        return (
+            value.replace("\\", "\\\\")
+            .replace(";", "\\;")
+            .replace(",", "\\,")
+            .replace("\n", "\\n")
+        )
+
+    summary = ical_text(f"{show['artist']} at {show['venue']}")
+    lines = [
+        "BEGIN:VCALENDAR",
+        "VERSION:2.0",
+        "PRODID:-//Humble Chuck//Shows//EN",
+        "CALSCALE:GREGORIAN",
+        "METHOD:PUBLISH",
+        "BEGIN:VEVENT",
+        f"UID:{show['artist'].lower().replace(' ', '-')}-{show['date'].replace('-', '')}@humblechuck.com",
+        f"DTSTART;TZID=America/New_York:{ical_timestamp(show['start_iso'])}",
+        f"DTEND;TZID=America/New_York:{ical_timestamp(show['end_iso'])}",
+        f"SUMMARY:{summary}",
+        f"LOCATION:{ical_text(show['address'])}",
+        f"DESCRIPTION:{ical_text(show['description'])} More: https://humblechuck.com/music#upcoming",
+        "URL:https://humblechuck.com/music#upcoming",
+        "END:VEVENT",
+        "END:VCALENDAR",
+        "",
+    ]
+    return "\r\n".join(lines)
 
 
 def common_values(content):
@@ -56,6 +102,32 @@ def build() -> Path:
             "cards": render_cards(content["data"]["cards"]),
         },
     )
+    show = content["music"]["upcoming_show"]
+    event_data = {
+        "@context": "https://schema.org",
+        "@type": "MusicEvent",
+        "name": f"{show['artist']} at {show['venue']}",
+        "startDate": show["start_iso"],
+        "endDate": show["end_iso"],
+        "eventStatus": "https://schema.org/EventScheduled",
+        "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
+        "location": {
+            "@type": "MusicVenue",
+            "name": show["venue"],
+            "address": {
+                "@type": "PostalAddress",
+                "streetAddress": "709 Lorimer Street",
+                "addressLocality": "Brooklyn",
+                "addressRegion": "NY",
+                "postalCode": "11211",
+                "addressCountry": "US",
+            },
+        },
+        "performer": {"@type": "MusicGroup", "name": show["artist"]},
+        "description": show["description"],
+        "image": "https://humblechuck.com/music-show-og.png",
+        "url": "https://humblechuck.com/music#upcoming",
+    }
     music = render_template(
         "music.html",
         {
@@ -63,6 +135,19 @@ def build() -> Path:
             "headline": escape(content["music"]["headline"]),
             "introduction": escape(content["music"]["introduction"]),
             "about": escape(content["music"]["about"]),
+            "show_artist": escape(show["artist"]),
+            "show_date_display": escape(show["date_display"]),
+            "show_time": escape(show["time"]),
+            "show_start_iso": escape(show["start_iso"], quote=True),
+            "show_venue": escape(show["venue"]),
+            "show_address": escape(show["address"]),
+            "show_description": escape(show["description"]),
+            "show_venue_url": escape(show["venue_url"], quote=True),
+            "show_map_url": "https://www.google.com/maps/search/?api=1&amp;query=709%20Lorimer%20Street%20Brooklyn%20NY%2011211",
+            "share_title": escape(f"{show['artist']} at {show['venue']}", quote=True),
+            "share_text": escape(f"{show['artist']} at {show['venue']} — September 5, 2026 at 8 PM.", quote=True),
+            "event_json": json.dumps(event_data, ensure_ascii=False).replace("<", "\\u003c"),
+            "past_shows": render_past_shows(content["music"]["past_shows"]),
             "playlist_url": escape(content["music"]["playlist_url"], quote=True),
             "playlist_embed_url": escape(
                 content["music"]["playlist_embed_url"], quote=True
@@ -88,6 +173,9 @@ def build() -> Path:
     (OUTPUT / "data" / "index.html").write_text(data, encoding="utf-8")
     (OUTPUT / "music" / "index.html").write_text(music, encoding="utf-8")
     (OUTPUT / "contact" / "index.html").write_text(contact, encoding="utf-8")
+    (OUTPUT / "humble-chuck-petes-2026-09-05.ics").write_text(
+        render_calendar(show), encoding="utf-8", newline=""
+    )
 
     not_found = f"""<!doctype html>
 <html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">
@@ -102,6 +190,7 @@ def build() -> Path:
         "favicon.ico",
         "favicon-32.png",
         "apple-touch-icon.png",
+        "music-show-og.png",
     ):
         source_asset = SOURCE / asset
         if source_asset.exists():

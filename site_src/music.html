@@ -3,14 +3,18 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="description" content="$introduction">
+    <meta name="description" content="$show_description">
     <meta name="theme-color" content="#f06942">
-    <meta property="og:title" content="$name — Music">
-    <meta property="og:description" content="$headline">
+    <meta property="og:title" content="$show_artist at $show_venue — September 5">
+    <meta property="og:description" content="$show_date_display at $show_time in Brooklyn.">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://humblechuck.com/music">
-    <meta property="og:image" content="https://humblechuck.com/og.png">
+    <meta property="og:image" content="https://humblechuck.com/music-show-og.png">
+    <meta property="og:image:alt" content="$show_artist at $show_venue, September 5, 2026 at 8 PM">
     <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:image" content="https://humblechuck.com/music-show-og.png">
+    <link rel="canonical" href="https://humblechuck.com/music">
+    <script type="application/ld+json">$event_json</script>
     <title>Music — $name</title>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -30,6 +34,28 @@
         <h1 id="page-title">$headline</h1>
         <p class="page-intro">$introduction</p>
         <div class="signal page-signal" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+      </section>
+      <section class="upcoming-show" id="upcoming" aria-labelledby="upcoming-title">
+        <div class="show-date" aria-hidden="true"><span>SEP</span><strong>05</strong><small>2026</small></div>
+        <div class="show-details">
+          <p class="eyebrow">Next show / Brooklyn</p>
+          <h2 id="upcoming-title">$show_artist<br>at $show_venue</h2>
+          <p class="show-lede">$show_description</p>
+          <dl class="show-facts">
+            <div><dt>When</dt><dd><time datetime="$show_start_iso">$show_date_display<br>$show_time</time></dd></div>
+            <div><dt>Where</dt><dd><a href="$show_map_url" target="_blank" rel="noopener noreferrer">$show_address<span aria-hidden="true"> ↗</span></a></dd></div>
+          </dl>
+          <div class="show-actions">
+            <a class="button button-primary" href="/humble-chuck-petes-2026-09-05.ics" download>Add to calendar</a>
+            <a class="button" href="$show_venue_url" target="_blank" rel="noopener noreferrer">Venue calendar <span aria-hidden="true">↗</span></a>
+            <button class="button" type="button" data-share-show data-share-title="$share_title" data-share-text="$share_text">Share show</button>
+            <span class="share-status" data-share-status role="status" aria-live="polite"></span>
+          </div>
+        </div>
+      </section>
+      <section class="show-archive" aria-labelledby="archive-title">
+        <div class="archive-heading"><p class="eyebrow">Recent history</p><div><h2 id="archive-title">Past shows.</h2><p>A concise selection from the master show history, newest first.</p></div></div>
+        <ol class="show-list">$past_shows</ol>
       </section>
       <section class="about music-about" aria-labelledby="about-title"><p class="eyebrow">Still playing</p><div><h2 id="about-title">The work keeps moving.</h2><p>$about</p></div></section>
       <section class="playlist" aria-labelledby="playlist-title">

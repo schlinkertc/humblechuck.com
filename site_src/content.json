@@ -33,6 +33,31 @@
     "headline": "Music is a present-tense practice.",
     "introduction": "I’m a drummer, vibraphonist, songwriter, and arranger. Music isn’t a former chapter—it’s an active part of how I work, listen, and move through the world.",
     "about": "I studied jazz at NYU and co-founded Del Water Gap, spending six years recording and touring with the band. I continue to write, play, arrange, and follow the next good sound.",
+    "upcoming_show": {
+      "artist": "Humble Chuck",
+      "date": "2026-09-05",
+      "date_display": "Saturday, September 5, 2026",
+      "time": "8:00 PM",
+      "start_iso": "2026-09-05T20:00:00-04:00",
+      "end_iso": "2026-09-05T21:00:00-04:00",
+      "venue": "Pete’s Candy Store",
+      "location": "Brooklyn, NY",
+      "address": "709 Lorimer Street, Brooklyn, NY 11211",
+      "venue_url": "https://www.petescandystore.com/calendar",
+      "description": "Humble Chuck returns to Pete’s Candy Store for an intimate Saturday-night set in Williamsburg."
+    },
+    "past_shows": [
+      {"date": "2026-05-11", "venue": "Pete’s Candy Store", "location": "Brooklyn, NY", "billing": "Humble Chuck · 9:30 PM"},
+      {"date": "2026-04-08", "venue": "Purgagory", "location": "Location not listed", "billing": "With Wilby"},
+      {"date": "2026-01-15", "venue": "The Paramount Hotel", "location": "Times Square, New York, NY", "billing": "With Clara Hannigan"},
+      {"date": "2025-04-29", "venue": "Pete’s Candy Store", "location": "Brooklyn, NY", "billing": "Humble Chuck · 9:30 PM"},
+      {"date": "2025-02-15", "venue": "Pete’s Candy Store", "location": "Brooklyn, NY", "billing": "Humble Chuck · 8:00 PM"},
+      {"date": "2024-12-23", "venue": "Pete’s Candy Store", "location": "Brooklyn, NY", "billing": "Humble Chuck · 9:30 PM"},
+      {"date": "2024-11-18", "venue": "Pete’s Candy Store", "location": "Brooklyn, NY", "billing": "Humble Chuck · 8:30 PM"},
+      {"date": "2024-07-20", "venue": "The Sultan Room", "location": "Brooklyn, NY", "billing": "With Stello"},
+      {"date": "2024-07-17", "venue": "The Sultan Room", "location": "Brooklyn, NY", "billing": "With Clara Hannigan"},
+      {"date": "2024-05-10", "venue": "Our Wicked Lady", "location": "Brooklyn, NY", "billing": "With Stello"}
+    ],
     "playlist_url": "https://open.spotify.com/playlist/4XeFzR948Yyk1X4SsXXogr?si=bd8e86601af54021",
     "playlist_embed_url": "https://open.spotify.com/embed/playlist/4XeFzR948Yyk1X4SsXXogr?utm_source=generator&theme=0",
     "cards": [

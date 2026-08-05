@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="$show_description">
+    <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#f06942">
     <meta property="og:title" content="$show_artist at $show_venue — September 5">
     <meta property="og:description" content="$show_date_display at $show_time in Brooklyn.">
@@ -29,7 +30,7 @@
       <nav aria-label="Primary navigation"><a href="/data">Data</a><a aria-current="page" href="/music">Music</a><a class="nav-contact" href="/contact">Say hello</a></nav>
     </header>
     <main id="main">
-      <section class="page-hero music-hero" aria-labelledby="page-title">
+      <section class="page-hero music-hero" id="overview" aria-labelledby="page-title">
         <p class="eyebrow">Drums / Vibraphone / Writing</p>
         <h1 id="page-title">$headline</h1>
         <p class="page-intro">$introduction</p>
@@ -53,7 +54,7 @@
           </div>
         </div>
       </section>
-      <section class="playlist" aria-labelledby="playlist-title">
+      <section class="playlist" id="recordings" aria-labelledby="playlist-title">
         <div class="playlist-copy">
           <p class="eyebrow">On record</p>
           <h2 id="playlist-title">Songs I’ve<br>played on.</h2>
@@ -71,13 +72,12 @@
             allowfullscreen></iframe>
         </div>
       </section>
-      <section class="about music-about" aria-labelledby="about-title"><p class="eyebrow">Still playing</p><div><h2 id="about-title">The work keeps moving.</h2><p>$about</p></div></section>
-      <section class="work" aria-labelledby="work-title">
+      <section class="work" id="listen-connect" aria-labelledby="work-title">
         <div class="section-heading"><p class="eyebrow">Listen & connect</p><h2 id="work-title">Keep your ears<br>open.</h2></div>
         <div class="cards two-up">$cards</div>
       </section>
-      <section class="show-archive" aria-labelledby="archive-title">
-        <div class="archive-heading"><p class="eyebrow">Live history / $past_show_range</p><div><h2 id="archive-title">Past shows.</h2><p>$past_show_count dated performances from the master show history. Open a year to explore.</p></div></div>
+      <section class="show-archive" id="past-shows" aria-labelledby="archive-title">
+        <div class="archive-heading"><p class="eyebrow">Live history / $past_show_range</p><div><h2 id="archive-title">Past shows.</h2><p>A curated selection of shows I’ve played over the years—not a complete list. Open a year to explore.</p></div></div>
         <div class="show-years">$past_shows</div>
       </section>
       <section class="cross-link cross-data"><p class="eyebrow">The other practice</p><a href="/data">Step into the data side <span aria-hidden="true">→</span></a></section>

@@ -172,7 +172,6 @@ def build() -> Path:
             **shared,
             "headline": escape(content["music"]["headline"]),
             "introduction": escape(content["music"]["introduction"]),
-            "about": escape(content["music"]["about"]),
             "show_artist": escape(show["artist"]),
             "show_date_display": escape(show["date_display"]),
             "show_time": escape(show["time"]),
@@ -186,7 +185,6 @@ def build() -> Path:
             "share_text": escape(f"{show['artist']} at {show['venue']} — September 5, 2026 at 8 PM.", quote=True),
             "event_json": json.dumps(event_data, ensure_ascii=False).replace("<", "\\u003c"),
             "past_shows": render_past_shows(show_history),
-            "past_show_count": str(len(show_history)),
             "past_show_range": f"{show_history[-1]['date'][:4]}–{show_history[0]['date'][:4]}",
             "playlist_url": escape(content["music"]["playlist_url"], quote=True),
             "playlist_embed_url": escape(

@@ -1,4 +1,5 @@
 import json
+from html import escape
 from pathlib import Path
 
 from site_builder.build import (
@@ -33,6 +34,8 @@ def test_build_creates_deployable_site():
     data = (OUTPUT / "data" / "index.html").read_text(encoding="utf-8")
     music = (OUTPUT / "music" / "index.html").read_text(encoding="utf-8")
     contact = (OUTPUT / "contact" / "index.html").read_text(encoding="utf-8")
+    robots = (OUTPUT / "robots.txt").read_text(encoding="utf-8")
+    sitemap = (OUTPUT / "sitemap.xml").read_text(encoding="utf-8")
     assert "Charlie Schlinkert" in index
     assert "$headline" not in index
     assert 'id="main"' in index
@@ -42,12 +45,25 @@ def test_build_creates_deployable_site():
     assert 'href="/favicon.ico"' in index
     assert 'src="/hc-logo.png"' in index
     assert "Useful systems for messy questions." in data
+    assert '<meta name="robots" content="index, follow">' in data
+    assert '<link rel="canonical" href="https://humblechuck.com/data">' in data
+    assert 'id="overview"' in data
+    assert 'id="projects"' in data
     assert "Music is a present-tense practice." in music
+    assert '<meta name="robots" content="index, follow">' in music
+    assert '<link rel="canonical" href="https://humblechuck.com/music">' in music
     assert "something I used to do" not in music
     assert "Songs I’ve" in music
     assert "open.spotify.com/embed/playlist/4XeFzR948Yyk1X4SsXXogr" in music
     assert 'title="Spotify playlist: Songs Charlie Schlinkert has played on"' in music
     assert 'id="upcoming"' in music
+    assert 'id="overview"' in music
+    assert 'id="recordings"' in music
+    assert 'id="listen-connect"' in music
+    assert 'id="past-shows"' in music
+    assert "Still playing" not in music
+    assert "The work keeps moving" not in music
+    assert "co-founded Del Water Gap" not in music
     assert "Humble Chuck" in music
     assert "Saturday, September 5, 2026" in music
     assert "Pete’s Candy Store" in music
@@ -55,7 +71,10 @@ def test_build_creates_deployable_site():
     assert 'data-share-show' in music
     assert '"@type": "MusicEvent"' in music
     assert 'content="https://humblechuck.com/music-show-og.png"' in music
-    assert "111 dated performances" in music
+    assert "A curated selection of shows I’ve played over the years" in music
+    assert "not a complete list" in music
+    assert "111 dated performances" not in music
+    assert "master" not in music.lower()
     assert music.count('class="show-row"') == 111
     assert music.count('class="show-year"') == 12
     assert music.count('<span class="eyebrow">Artist</span>') == 111
@@ -64,12 +83,15 @@ def test_build_creates_deployable_site():
     assert "Purgagory" not in music
     assert "Brooklyn, NY" in music
     assert music.index('id="upcoming"') < music.index('class="playlist"')
-    assert music.index('class="playlist"') < music.index('class="about music-about"')
+    assert music.index('class="playlist"') < music.index('class="work"')
     assert music.index('class="work"') < music.index('class="show-archive"')
     assert music.index('class="show-archive"') < music.index('class="cross-link ')
     assert "schlinkertc@gmail.com" in contact
     assert 'href="mailto:schlinkertc@gmail.com"' in contact
     assert 'aria-current="page" href="/contact"' in contact
+    assert "User-agent: *\nAllow: /" in robots
+    assert "<loc>https://humblechuck.com/data</loc>" in sitemap
+    assert "<loc>https://humblechuck.com/music</loc>" in sitemap
 
 
 def test_content_has_valid_card_links():
@@ -77,7 +99,11 @@ def test_content_has_valid_card_links():
     cards = content["data"]["cards"] + content["music"]["cards"]
     html = render_cards(cards)
     assert html.count("<article") == 4
-    assert all(card["url"] in html for card in cards)
+    assert all(escape(card["url"], quote=True) in html for card in cards)
+    assert (
+        "https://www.youtube.com/watch?v=yAkc_BCY258&amp;list=RDyAkc_BCY258&amp;start_radio=1"
+        in html
+    )
 
 
 def test_music_show_archive_and_calendar_are_rendered_from_content():

@@ -4,6 +4,7 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="$introduction">
+    <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#d8ff54">
     <meta property="og:title" content="$name — Data">
     <meta property="og:description" content="$headline">
@@ -11,6 +12,7 @@
     <meta property="og:url" content="https://humblechuck.com/data">
     <meta property="og:image" content="https://humblechuck.com/og.png">
     <meta name="twitter:card" content="summary_large_image">
+    <link rel="canonical" href="https://humblechuck.com/data">
     <title>Data — $name</title>
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
@@ -25,13 +27,13 @@
       <nav aria-label="Primary navigation"><a aria-current="page" href="/data">Data</a><a href="/music">Music</a><a class="nav-contact" href="/contact">Say hello</a></nav>
     </header>
     <main id="main">
-      <section class="page-hero data-hero" aria-labelledby="page-title">
+      <section class="page-hero data-hero" id="overview" aria-labelledby="page-title">
         <p class="eyebrow">Data / Software / Systems</p>
         <h1 id="page-title">$headline</h1>
         <p class="page-intro">$introduction</p>
         <div class="data-grid page-data-grid" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </section>
-      <section class="work" aria-labelledby="work-title">
+      <section class="work" id="projects" aria-labelledby="work-title">
         <div class="section-heading"><p class="eyebrow">Selected channels</p><h2 id="work-title">A few places<br>to start.</h2></div>
         <div class="cards two-up">$cards</div>
       </section>

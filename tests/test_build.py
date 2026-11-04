@@ -70,8 +70,15 @@ def test_build_creates_deployable_site():
     assert "Wednesday, December 9, 2026" in music
     assert "The Delancey" in music
     assert "Pete’s Candy Store" in music
-    assert "Time TBD" in music
+    assert "Time TBD" not in music
+    assert "6:00 PM" in music
     assert "Add to calendar" not in music
+    assert not list(output.glob("*.ics"))
+    event = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', music).group(1))
+    assert event["startDate"] == "2026-12-09T18:00:00-05:00"
+    assert "endDate" not in event
+    show = json.loads((SOURCE / "content.json").read_text())["music"]["upcoming_show"]
+    assert set(show) == {"artist", "date", "date_display", "venue", "location", "description", "time", "start_iso"}
     assert 'data-share-show' in music
     assert '"@type": "MusicEvent"' in music
     assert 'content="https://humblechuck.com/og.png"' in music
@@ -129,9 +136,20 @@ def test_music_show_archive_is_rendered_from_content():
     assert show_artist_and_note("With Clara Hannigan") == ("Clara Hannigan", "")
 
 
-def test_delancey_announcement_has_no_unconfirmed_or_stale_details():
-    build()
-    music = (OUTPUT / "music" / "index.html").read_text(encoding="utf-8")
+def test_missing_show_details_are_not_invented(tmp_path, monkeypatch):
+    builder = import_module("site_builder.build")
+    source = tmp_path / "site_src"
+    shutil.copytree(SOURCE, source)
+    content = json.loads((source / "content.json").read_text(encoding="utf-8"))
+    show = content["music"]["upcoming_show"]
+    for key in ("time", "start_iso", "end_iso", "address", "venue_url"):
+        show.pop(key, None)
+    show["description"] = "Humble Chuck at The Delancey on Wednesday, December 9, 2026. Lower East Side, NYC. Time TBD."
+    (source / "content.json").write_text(json.dumps(content), encoding="utf-8")
+    monkeypatch.setattr(builder, "SOURCE", source)
+    monkeypatch.setattr(builder, "OUTPUT", tmp_path / "dist")
+    output = builder.build()
+    music = (output / "music" / "index.html").read_text(encoding="utf-8")
     announcement = music.split('<section class="upcoming-show"', 1)[1].split("</section>", 1)[0]
     metadata = music.split("</head>", 1)[0]
     for text in (announcement, metadata):
@@ -146,7 +164,7 @@ def test_delancey_announcement_has_no_unconfirmed_or_stale_details():
     assert "The+Delancey%2C+Lower+East+Side%2C+NYC" in announcement
     assert "Venue calendar" not in announcement
     assert 'data-share-text="Humble Chuck at The Delancey — Wednesday, December 9, 2026. Time TBD. Lower East Side, NYC."' in announcement
-    assert not list(OUTPUT.glob("*.ics"))
+    assert not list(output.glob("*.ics"))
     assert "$show_" not in music
     event = json.loads(re.search(r'<script type="application/ld\+json">(.*?)</script>', music).group(1))
     assert event["startDate"] == "2026-12-09"

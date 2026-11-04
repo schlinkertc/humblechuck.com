@@ -6,14 +6,14 @@
     <meta name="description" content="$show_description">
     <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#f06942">
-    <meta property="og:title" content="$show_artist at $show_venue — September 5">
-    <meta property="og:description" content="$show_date_display at $show_time in Brooklyn.">
+    <meta property="og:title" content="$show_artist at $show_venue — $show_date_display">
+    <meta property="og:description" content="$show_description">
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://humblechuck.com/music">
-    <meta property="og:image" content="https://humblechuck.com/music-show-og.png">
-    <meta property="og:image:alt" content="$show_artist at $show_venue, September 5, 2026 at 8 PM">
+    <meta property="og:image" content="https://humblechuck.com/og.png">
+    <meta property="og:image:alt" content="Charlie Schlinkert — Data &amp; Music">
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:image" content="https://humblechuck.com/music-show-og.png">
+    <meta name="twitter:image" content="https://humblechuck.com/og.png">
     <link rel="canonical" href="https://humblechuck.com/music">
     <script type="application/ld+json">$event_json</script>
     <title>Music — $name</title>
@@ -37,9 +37,9 @@
         <div class="signal page-signal" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
       </section>
       <section class="upcoming-show" id="upcoming" aria-labelledby="upcoming-title">
-        <div class="show-date" aria-hidden="true"><span>SEP</span><strong>05</strong><small>2026</small></div>
+        <div class="show-date" aria-hidden="true"><span>$show_month</span><strong>$show_day</strong><small>$show_year</small></div>
         <div class="show-details">
-          <p class="eyebrow">Next show / Brooklyn</p>
+          <p class="eyebrow">Next show / $show_location</p>
           <h2 id="upcoming-title">$show_artist<br>at $show_venue</h2>
           <p class="show-lede">$show_description</p>
           <dl class="show-facts">
@@ -47,8 +47,8 @@
             <div><dt>Where</dt><dd><a href="$show_map_url" target="_blank" rel="noopener noreferrer">$show_address<span aria-hidden="true"> ↗</span></a></dd></div>
           </dl>
           <div class="show-actions">
-            <a class="button button-primary" href="/humble-chuck-petes-2026-09-05.ics" download>Add to calendar</a>
-            <a class="button" href="$show_venue_url" target="_blank" rel="noopener noreferrer">Venue calendar <span aria-hidden="true">↗</span></a>
+            $show_calendar_action
+            $show_venue_action
             <button class="button" type="button" data-share-show data-share-title="$share_title" data-share-text="$share_text">Share show</button>
             <span class="share-status" data-share-status role="status" aria-live="polite"></span>
           </div>

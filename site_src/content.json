@@ -34,16 +34,11 @@
     "introduction": "I’m a drummer, vibraphonist, songwriter, and arranger. Music isn’t a former chapter—it’s an active part of how I work, listen, and move through the world.",
     "upcoming_show": {
       "artist": "Humble Chuck",
-      "date": "2026-09-05",
-      "date_display": "Saturday, September 5, 2026",
-      "time": "8:00 PM",
-      "start_iso": "2026-09-05T20:00:00-04:00",
-      "end_iso": "2026-09-05T21:00:00-04:00",
-      "venue": "Pete’s Candy Store",
-      "location": "Brooklyn, NY",
-      "address": "709 Lorimer Street, Brooklyn, NY 11211",
-      "venue_url": "https://www.petescandystore.com/calendar",
-      "description": "Humble Chuck returns to Pete’s Candy Store for an intimate Saturday-night set in Williamsburg."
+      "date": "2026-12-09",
+      "date_display": "Wednesday, December 9, 2026",
+      "venue": "The Delancey",
+      "location": "Lower East Side, NYC",
+      "description": "Humble Chuck plays The Delancey on Wednesday, December 9, 2026, on NYC’s Lower East Side. Time TBD."
     },
     "playlist_url": "https://open.spotify.com/playlist/4XeFzR948Yyk1X4SsXXogr?si=bd8e86601af54021",
     "playlist_embed_url": "https://open.spotify.com/embed/playlist/4XeFzR948Yyk1X4SsXXogr?utm_source=generator&theme=0",

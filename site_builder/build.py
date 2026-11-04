@@ -5,6 +5,7 @@ from datetime import date
 from html import escape
 from pathlib import Path
 from string import Template
+from urllib.parse import urlencode
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -93,7 +94,7 @@ def render_calendar(show):
         f"DTSTART;TZID=America/New_York:{ical_timestamp(show['start_iso'])}",
         f"DTEND;TZID=America/New_York:{ical_timestamp(show['end_iso'])}",
         f"SUMMARY:{summary}",
-        f"LOCATION:{ical_text(show['address'])}",
+        f"LOCATION:{ical_text(show.get('address') or show['location'])}",
         f"DESCRIPTION:{ical_text(show['description'])} More: https://humblechuck.com/music#upcoming",
         "URL:https://humblechuck.com/music#upcoming",
         "END:VEVENT",
@@ -141,31 +142,39 @@ def build() -> Path:
         },
     )
     show = content["music"]["upcoming_show"]
+    show_date = date.fromisoformat(show["date"])
+    calendar_name = f"humble-chuck-{show['date']}.ics"
+    has_calendar = bool(show.get("start_iso") and show.get("end_iso"))
+    calendar_action = (
+        f'<a class="button button-primary" href="/{calendar_name}" download>Add to calendar</a>'
+        if has_calendar else ""
+    )
+    venue_action = (
+        f'<a class="button" href="{escape(show["venue_url"], quote=True)}" target="_blank" rel="noopener noreferrer">Venue calendar <span aria-hidden="true">↗</span></a>'
+        if show.get("venue_url") else ""
+    )
+    map_url = "https://www.google.com/maps/search/?" + urlencode(
+        {"api": "1", "query": show.get("address") or f"{show['venue']}, {show['location']}"}
+    )
     event_data = {
         "@context": "https://schema.org",
         "@type": "MusicEvent",
         "name": f"{show['artist']} at {show['venue']}",
-        "startDate": show["start_iso"],
-        "endDate": show["end_iso"],
+        "startDate": show.get("start_iso") or show["date"],
         "eventStatus": "https://schema.org/EventScheduled",
         "eventAttendanceMode": "https://schema.org/OfflineEventAttendanceMode",
         "location": {
             "@type": "MusicVenue",
             "name": show["venue"],
-            "address": {
-                "@type": "PostalAddress",
-                "streetAddress": "709 Lorimer Street",
-                "addressLocality": "Brooklyn",
-                "addressRegion": "NY",
-                "postalCode": "11211",
-                "addressCountry": "US",
-            },
+            "address": show.get("address") or show["location"],
         },
         "performer": {"@type": "MusicGroup", "name": show["artist"]},
         "description": show["description"],
-        "image": "https://humblechuck.com/music-show-og.png",
+        "image": "https://humblechuck.com/og.png",
         "url": "https://humblechuck.com/music#upcoming",
     }
+    if show.get("end_iso"):
+        event_data["endDate"] = show["end_iso"]
     music = render_template(
         "music.html",
         {
@@ -174,15 +183,20 @@ def build() -> Path:
             "introduction": escape(content["music"]["introduction"]),
             "show_artist": escape(show["artist"]),
             "show_date_display": escape(show["date_display"]),
-            "show_time": escape(show["time"]),
-            "show_start_iso": escape(show["start_iso"], quote=True),
+            "show_month": show_date.strftime("%b").upper(),
+            "show_day": show_date.strftime("%d"),
+            "show_year": str(show_date.year),
+            "show_time": escape(show.get("time") or "Time TBD"),
+            "show_start_iso": escape(show.get("start_iso") or show["date"], quote=True),
             "show_venue": escape(show["venue"]),
-            "show_address": escape(show["address"]),
+            "show_location": escape(show["location"]),
+            "show_address": escape(show.get("address") or show["location"]),
             "show_description": escape(show["description"]),
-            "show_venue_url": escape(show["venue_url"], quote=True),
-            "show_map_url": "https://www.google.com/maps/search/?api=1&amp;query=709%20Lorimer%20Street%20Brooklyn%20NY%2011211",
+            "show_calendar_action": calendar_action,
+            "show_venue_action": venue_action,
+            "show_map_url": escape(map_url, quote=True),
             "share_title": escape(f"{show['artist']} at {show['venue']}", quote=True),
-            "share_text": escape(f"{show['artist']} at {show['venue']} — September 5, 2026 at 8 PM.", quote=True),
+            "share_text": escape(f"{show['artist']} at {show['venue']} — {show['date_display']}. {show.get('time') or 'Time TBD'}. {show['location']}.", quote=True),
             "event_json": json.dumps(event_data, ensure_ascii=False).replace("<", "\\u003c"),
             "past_shows": render_past_shows(show_history),
             "past_show_range": f"{show_history[-1]['date'][:4]}–{show_history[0]['date'][:4]}",
@@ -211,9 +225,10 @@ def build() -> Path:
     (OUTPUT / "data" / "index.html").write_text(data, encoding="utf-8")
     (OUTPUT / "music" / "index.html").write_text(music, encoding="utf-8")
     (OUTPUT / "contact" / "index.html").write_text(contact, encoding="utf-8")
-    (OUTPUT / "humble-chuck-petes-2026-09-05.ics").write_text(
-        render_calendar(show), encoding="utf-8", newline=""
-    )
+    if has_calendar:
+        (OUTPUT / calendar_name).write_text(
+            render_calendar(show), encoding="utf-8", newline=""
+        )
 
     not_found = f"""<!doctype html>
 <html lang=\"en\"><head><meta charset=\"utf-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">

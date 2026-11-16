@@ -9,6 +9,8 @@ from aws_cdk import (
     aws_certificatemanager as acm,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
+    aws_iam as iam,
+    aws_lambda as lambda_,
     aws_route53 as route53,
     aws_route53_targets as targets,
     aws_s3 as s3,
@@ -42,6 +44,54 @@ class HumbleChuckSiteStack(Stack):
             removal_policy=RemovalPolicy.RETAIN,
             auto_delete_objects=False,
         )
+
+        recordings = s3.Bucket(
+            self,
+            "RecordingsBucket",
+            bucket_name=f"humblechuck-recordings-{self.account}-{self.region}",
+            block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
+            encryption=s3.BucketEncryption.S3_MANAGED,
+            enforce_ssl=True,
+            versioned=True,
+            removal_policy=RemovalPolicy.RETAIN,
+            auto_delete_objects=False,
+        )
+        # Only the first recording and its setup marker are writable by CI.
+        # Subsequent track uploads are managed independently of site deploys.
+        recordings.add_to_resource_policy(iam.PolicyStatement(
+            principals=[iam.ArnPrincipal(
+                f"arn:{self.partition}:iam::{self.account}:role/humblechuck-github-actions"
+            )],
+            actions=["s3:GetObject", "s3:PutObject"],
+            resources=[
+                recordings.arn_for_objects("tracks/peace-i-seek-take-6.m4a"),
+                recordings.arn_for_objects("setup/initial-recording-v1"),
+            ],
+        ))
+        # S3 needs ListBucket permission to return 404 (rather than 403) for
+        # a missing setup marker during the first deployment.
+        recordings.add_to_resource_policy(iam.PolicyStatement(
+            principals=[iam.ArnPrincipal(
+                f"arn:{self.partition}:iam::{self.account}:role/humblechuck-github-actions"
+            )],
+            actions=["s3:ListBucket"], resources=[recordings.bucket_arn],
+        ))
+        catalog = lambda_.Function(
+            self,
+            "DemosCatalog",
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            handler="catalog.handler",
+            code=lambda_.Code.from_asset(str(Path(__file__).parent / "demos")),
+            memory_size=128,
+            timeout=Duration.seconds(15),
+            environment={"RECORDINGS_BUCKET": recordings.bucket_name},
+        )
+        catalog.add_to_role_policy(iam.PolicyStatement(
+            actions=["s3:ListBucket"],
+            resources=[recordings.bucket_arn],
+            conditions={"StringLike": {"s3:prefix": ["tracks/*"]}},
+        ))
+        catalog_url = catalog.add_function_url(auth_type=lambda_.FunctionUrlAuthType.AWS_IAM)
 
         zone = route53.PublicHostedZone(
             self,
@@ -124,6 +174,39 @@ class HumbleChuckSiteStack(Stack):
             ],
         )
 
+        distribution.add_behavior(
+            "/api/demos",
+            origins.FunctionUrlOrigin.with_origin_access_control(catalog_url),
+            viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+            allowed_methods=cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+            cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+        )
+        # New function URLs require both invocation permissions. The pinned
+        # CDK origin helper grants InvokeFunctionUrl; grant the second here.
+        catalog.add_permission(
+            "CloudFrontInvokeFunction",
+            principal=iam.ServicePrincipal("cloudfront.amazonaws.com"),
+            action="lambda:InvokeFunction",
+            source_arn=distribution.distribution_arn,
+            invoked_via_function_url=True,
+        )
+        distribution.add_behavior(
+            "/tracks/*",
+            origins.S3BucketOrigin.with_origin_access_control(recordings),
+            viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+            allowed_methods=cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
+            # Replacing the same S3 key must serve the replacement immediately.
+            cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+            response_headers_policy=cloudfront.ResponseHeadersPolicy(
+                self, "RecordingHeaders",
+                custom_headers_behavior=cloudfront.ResponseCustomHeadersBehavior(
+                    custom_headers=[cloudfront.ResponseCustomHeader(
+                        header="Cache-Control", value="no-store", override=True,
+                    )],
+                ),
+            ),
+        )
+
         if enable_domain:
             cloudfront_target = route53.RecordTarget.from_alias(
                 targets.CloudFrontTarget(distribution)
@@ -187,6 +270,8 @@ class HumbleChuckSiteStack(Stack):
         )
 
         CfnOutput(self, "CloudFrontUrl", value=f"https://{distribution.domain_name}")
+        CfnOutput(self, "RecordingsBucketName", value=recordings.bucket_name)
+        CfnOutput(self, "RecordingsPrefix", value="tracks/")
         CfnOutput(self, "HostedZoneId", value=zone.hosted_zone_id)
         for index in range(4):
             CfnOutput(

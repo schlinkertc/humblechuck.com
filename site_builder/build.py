@@ -215,16 +215,19 @@ def build() -> Path:
             "introduction": escape(content["contact"]["introduction"]),
         },
     )
+    demos = render_template("demos.html", shared)
 
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)
     (OUTPUT / "data").mkdir(parents=True)
     (OUTPUT / "music").mkdir(parents=True)
     (OUTPUT / "contact").mkdir(parents=True)
+    (OUTPUT / "demos").mkdir(parents=True)
     (OUTPUT / "index.html").write_text(home, encoding="utf-8")
     (OUTPUT / "data" / "index.html").write_text(data, encoding="utf-8")
     (OUTPUT / "music" / "index.html").write_text(music, encoding="utf-8")
     (OUTPUT / "contact" / "index.html").write_text(contact, encoding="utf-8")
+    (OUTPUT / "demos" / "index.html").write_text(demos, encoding="utf-8")
     if has_calendar:
         (OUTPUT / calendar_name).write_text(
             render_calendar(show), encoding="utf-8", newline=""
@@ -238,6 +241,7 @@ def build() -> Path:
     for asset in (
         "styles.css",
         "site.js",
+        "demos.js",
         "og.png",
         "hc-logo.png",
         "favicon.ico",
@@ -259,6 +263,7 @@ def build() -> Path:
         '<url><loc>https://humblechuck.com/data</loc></url>'
         '<url><loc>https://humblechuck.com/music</loc></url>'
         '<url><loc>https://humblechuck.com/contact</loc></url>'
+        '<url><loc>https://humblechuck.com/demos</loc></url>'
         '</urlset>\n',
         encoding="utf-8",
     )

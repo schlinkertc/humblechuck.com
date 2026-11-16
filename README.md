@@ -39,6 +39,47 @@ No site or infrastructure deployment runs from a local machine.
 
 Most copy and project links live in `site_src/content.json`. Layout and metadata are in `site_src/index.html`; visual design is in `site_src/styles.css`.
 
+## Demos and recording uploads
+
+The `/demos` page discovers recordings from S3 at request time. No site build or
+code deployment is needed when adding, replacing, or deleting audio.
+
+- **Account / region:** personal account `559681045665`, `us-east-1`.
+- **Bucket:** `humblechuck-recordings-559681045665-us-east-1`.
+- **Upload folder:** `tracks/`.
+- **First track:** `tracks/peace-i-seek-take-6.m4a` → “Peace I Seek — Take 6”.
+- **Accepted extensions:** M4A, MP3, WAV, OGG, FLAC, AAC, and OPUS. Browser codec support varies; M4A/AAC and MP3 are the preferred formats.
+
+In the AWS S3 console, open this bucket, open `tracks/`, and upload an audio file.
+Use descriptive filenames such as `my-next-song-take-2.m4a`; the player derives
+titles from filenames and lists tracks alphabetically. Replace the same filename
+to update a recording. Delete its current S3 object to remove it from the list.
+S3 versioning keeps old versions available for recovery.
+
+The page checks for changes every 60 seconds while visible and when returning to
+the tab. **Refresh** fetches changes immediately. Currently playing audio is not
+interrupted; the replacement is loaded when recued. Streaming and downloads are
+served through CloudFront without caching, so replacing a key does not require
+a CloudFront invalidation. Native audio controls provide play/pause, scrubbing,
+and volume, with previous/next and 15-second skip buttons alongside them.
+
+The recordings bucket is private, retained on stack deletion, and separate from
+the website deployment's pruning. CloudFront uses Origin Access Control for both
+audio and the catalog Lambda URL. The catalog can only list `tracks/`, and only
+returns audio files. Everything in `tracks/` with a supported audio extension is
+publicly playable and downloadable through the website.
+
+On the first deployment, GitHub Actions uploads the supplied song from
+`recordings/seed/` and writes `setup/initial-recording-v1`. Future deployments
+leave recordings untouched, including replacements and deletions. Do not delete
+the setup marker. The CI upload permission covers only the initial song and marker;
+it does not grant write access to other recordings. All infrastructure deployment
+continues through GitHub Actions on `main`.
+
+For local playback QA, run `python scripts/preview_demos.py` after building.
+This serves the supplied recording locally and simulates the live catalog;
+the sample is not copied into the static website build.
+
 ## Safety notes
 
 - The content bucket is private and reachable only through CloudFront Origin Access Control.

@@ -201,3 +201,43 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding-block
   .portal-data:hover .data-grid i, .portal-data:focus-visible .data-grid i, .portal-signal i { animation: none; }
   .portal::before, .portal-arrow, .data-grid i { transition: none; }
 }
+
+/* Demos: a small listening room. */
+.demos-intro { padding-block: clamp(3.5rem, 7vw, 7rem) 3rem; }
+.demos-intro h1 { margin: 1.2rem 0 1.5rem; font-size: clamp(5rem, 13vw, 12rem); line-height: .9; letter-spacing: -.075em; font-weight: 500; }
+.demos-intro > p:last-child { font-size: clamp(1.05rem, 1.7vw, 1.35rem); line-height: 1.6; }
+.demo-library { display: grid; grid-template-columns: 1.1fr 1fr; border-block: 1px solid var(--ink); margin-bottom: 5rem; }
+.demo-deck { background: var(--orange); padding: clamp(1.25rem, 3vw, 3rem); border-right: 1px solid var(--ink); min-width: 0; }
+.demo-deck-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+.demo-badge { font: .6rem var(--mono); border: 1px solid var(--ink); border-radius: 50%; padding: 1rem .65rem; white-space: nowrap; }
+.demo-deck h2 { margin: 2.5rem 0 2rem; font-size: clamp(2.3rem, 4vw, 4.7rem); line-height: 1.05; overflow-wrap: anywhere; }
+.demo-deck audio { width: 100%; display: block; }
+.demo-controls { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.25rem 0 2rem; }
+.demo-controls .button { flex: 1 1 auto; min-height: 44px; }
+.demo-library button:disabled { opacity: .4; cursor: default; }
+.demo-current-download { font-size: .85rem; }
+.demo-queue { padding: clamp(1.25rem, 3vw, 3rem); min-width: 0; }
+.demo-queue-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+.demo-queue-heading h3 { font: 500 .75rem var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+.demo-queue-heading h3 span { opacity: .6; }
+.demo-queue-heading button { min-height: 44px; }
+.demo-status { font-size: .85rem; line-height: 1.6; }
+.demo-status:empty { margin: 1.25rem 0 0; }
+.demo-track-list { padding: 0; margin: 1rem 0 0; list-style: none; }
+.demo-track-list li { display: flex; align-items: stretch; border-top: 1px solid var(--line); }
+.demo-track-list li:last-child { border-bottom: 1px solid var(--line); }
+.demo-track { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; min-height: 72px; padding: 1rem .5rem; text-align: left; border: 0; background: transparent; font: 500 1rem/1.45 var(--sans); color: var(--ink); cursor: pointer; overflow-wrap: anywhere; }
+.demo-track-number { font: .7rem var(--mono); opacity: .6; }
+.demo-track[aria-current], .demo-track:hover { background: var(--paper-deep); }
+.demo-track[aria-current] .demo-track-number { opacity: 1; }
+.demo-track-download { display: grid; place-items: center; flex: 0 0 48px; font-size: 1.4rem; text-decoration: none; }
+.demo-track-download:hover { background: var(--acid); }
+.demo-library :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.demos-page .cross-link { padding-top: 0; }
+@media (max-width: 780px) {
+  .demo-library { grid-template-columns: 1fr; }
+  .demo-deck { border-right: 0; border-bottom: 1px solid var(--ink); }
+  .demos-page .wordmark > span:last-child { display: none; }
+  .demos-page nav { gap: 1rem; }
+  .demo-controls .button { padding-inline: .7rem; font-size: .68rem; }
+}

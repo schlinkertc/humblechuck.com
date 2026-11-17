@@ -81,13 +81,13 @@ class HumbleChuckSiteStack(Stack):
             "DemosCatalog",
             runtime=lambda_.Runtime.PYTHON_3_13,
             handler="catalog.handler",
-            code=lambda_.Code.from_asset(str(Path(__file__).parent / "demos")),
-            memory_size=128,
+            code=lambda_.Code.from_asset(str(Path(__file__).parent / "demos"), exclude=["__pycache__", "*.pyc"]),
+            memory_size=256,
             timeout=Duration.seconds(15),
             environment={"RECORDINGS_BUCKET": recordings.bucket_name},
         )
         catalog.add_to_role_policy(iam.PolicyStatement(
-            actions=["s3:ListBucket"],
+            actions=["s3:ListBucketVersions"],
             resources=[recordings.bucket_arn],
             conditions={"StringLike": {"s3:prefix": ["tracks/*"]}},
         ))
@@ -163,13 +163,13 @@ class HumbleChuckSiteStack(Stack):
                     http_status=403,
                     response_http_status=404,
                     response_page_path="/404.html",
-                    ttl=Duration.minutes(5),
+                    ttl=Duration.seconds(0),
                 ),
                 cloudfront.ErrorResponse(
                     http_status=404,
                     response_http_status=404,
                     response_page_path="/404.html",
-                    ttl=Duration.minutes(5),
+                    ttl=Duration.seconds(0),
                 ),
             ],
         )
@@ -179,7 +179,15 @@ class HumbleChuckSiteStack(Stack):
             origins.FunctionUrlOrigin.with_origin_access_control(catalog_url),
             viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             allowed_methods=cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-            cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+            cache_policy=cloudfront.CachePolicy(
+                self, "DemosCatalogCache",
+                min_ttl=Duration.seconds(0),
+                default_ttl=Duration.seconds(15),
+                max_ttl=Duration.seconds(15),
+                enable_accept_encoding_gzip=True,
+                enable_accept_encoding_brotli=True,
+            ),
+            compress=True,
         )
         # New function URLs require both invocation permissions. The pinned
         # CDK origin helper grants InvokeFunctionUrl; grant the second here.
@@ -192,16 +200,25 @@ class HumbleChuckSiteStack(Stack):
         )
         distribution.add_behavior(
             "/tracks/*",
-            origins.S3BucketOrigin.with_origin_access_control(recordings),
+            origins.S3BucketOrigin.with_origin_access_control(recordings,
+                origin_access_levels=[cloudfront.AccessLevel.READ, cloudfront.AccessLevel.READ_VERSIONED],
+            ),
             viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
             allowed_methods=cloudfront.AllowedMethods.ALLOW_GET_HEAD_OPTIONS,
-            # Replacing the same S3 key must serve the replacement immediately.
-            cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+            # Real S3 version IDs make each recording URL stable. Newly uploaded
+            # replacements receive a new URL as soon as the catalog refreshes.
+            cache_policy=cloudfront.CachePolicy(
+                self, "RecordingVersionCache",
+                query_string_behavior=cloudfront.CacheQueryStringBehavior.allow_list("versionId"),
+                min_ttl=Duration.hours(1),
+                default_ttl=Duration.days(1),
+                max_ttl=Duration.days(1),
+            ),
             response_headers_policy=cloudfront.ResponseHeadersPolicy(
                 self, "RecordingHeaders",
                 custom_headers_behavior=cloudfront.ResponseCustomHeadersBehavior(
                     custom_headers=[cloudfront.ResponseCustomHeader(
-                        header="Cache-Control", value="no-store", override=True,
+                        header="Cache-Control", value="public, max-age=3600", override=True,
                     )],
                 ),
             ),

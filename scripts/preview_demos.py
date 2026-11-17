@@ -5,6 +5,7 @@ from functools import partial
 from hashlib import md5
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 import json
+import os
 from pathlib import Path
 import re
 import sys
@@ -14,7 +15,7 @@ ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from infrastructure.demos.catalog import track_from_object
 
-SEED = ROOT / "recordings" / "seed"
+SEED = Path(os.environ.get("DEMO_PREVIEW_RECORDINGS_DIR", ROOT / "recordings" / "seed"))
 
 
 class PreviewHandler(SimpleHTTPRequestHandler):

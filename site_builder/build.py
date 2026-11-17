@@ -253,6 +253,7 @@ def build() -> Path:
         source_asset = SOURCE / asset
         if source_asset.exists():
             shutil.copy2(source_asset, OUTPUT / asset)
+    shutil.copytree(SOURCE / "fonts", OUTPUT / "fonts")
     (OUTPUT / "robots.txt").write_text(
         "User-agent: *\nAllow: /\nSitemap: https://humblechuck.com/sitemap.xml\n",
         encoding="utf-8",

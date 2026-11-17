@@ -1,4 +1,29 @@
-@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600&display=swap');
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url(/fonts/dm-mono-400-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'DM Mono';
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url(/fonts/dm-mono-500-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+@font-face {
+  font-family: 'Manrope';
+  font-style: normal;
+  font-weight: 400 600;
+  font-display: swap;
+  src: url(/fonts/manrope-400-600-latin.woff2) format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
 
 :root {
   --ink: #1d211d;
@@ -227,7 +252,7 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding-block
 .demo-track-list li { display: flex; align-items: stretch; border-top: 1px solid var(--line); }
 .demo-track-list li:last-child { border-bottom: 1px solid var(--line); }
 .demo-track { display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 0; min-height: 72px; padding: 1rem .5rem; text-align: left; border: 0; background: transparent; font: 500 1rem/1.45 var(--sans); color: var(--ink); cursor: pointer; overflow-wrap: anywhere; }
-.demo-track-number { font: .7rem var(--mono); opacity: .6; }
+.demo-track-number { flex: 0 0 2ch; white-space: nowrap; font: .7rem var(--mono); opacity: .6; }
 .demo-track[aria-current], .demo-track:hover { background: var(--paper-deep); }
 .demo-track[aria-current] .demo-track-number { opacity: 1; }
 .demo-track-download { display: grid; place-items: center; flex: 0 0 48px; font-size: 1.4rem; text-decoration: none; }
@@ -239,5 +264,7 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding-block
   .demo-deck { border-right: 0; border-bottom: 1px solid var(--ink); }
   .demos-page .wordmark > span:last-child { display: none; }
   .demos-page nav { gap: 1rem; }
-  .demo-controls .button { padding-inline: .7rem; font-size: .68rem; }
+  .demo-controls { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .demo-controls [data-toggle-play] { grid-column: 1 / -1; }
+  .demo-controls .button { padding-inline: .25rem; font-size: .68rem; }
 }

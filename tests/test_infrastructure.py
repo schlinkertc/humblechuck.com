@@ -5,7 +5,7 @@ from infrastructure.site_stack import HumbleChuckSiteStack
 from site_builder.build import build
 
 
-def test_recordings_have_private_storage_and_uncached_cloudfront_routes(tmp_path):
+def test_recordings_have_private_storage_and_versioned_cloudfront_caching(tmp_path):
     build()
     app = cdk.App(outdir=str(tmp_path / "cdk.out"))
     stack = HumbleChuckSiteStack(app, "TestSite", env=cdk.Environment(account="559681045665", region="us-east-1"))
@@ -19,10 +19,20 @@ def test_recordings_have_private_storage_and_uncached_cloudfront_routes(tmp_path
     recordings_id, recordings = next((key, value) for key, value in resources.items() if value["Type"] == "AWS::S3::Bucket" and "BucketName" in value["Properties"])
     assert recordings["DeletionPolicy"] == "Retain"
     distribution = next(value for value in resources.values() if value["Type"] == "AWS::CloudFront::Distribution")
+    assert all(item['ErrorCachingMinTTL'] == 0 for item in distribution['Properties']['DistributionConfig']['CustomErrorResponses'])
     behaviors = {item["PathPattern"]: item for item in distribution["Properties"]["DistributionConfig"]["CacheBehaviors"]}
     for path in ("/api/demos", "/tracks/*"):
-        assert behaviors[path]["CachePolicyId"] == "4135ea2d-6df8-44a3-9df3-4b5a84be39ad"
         assert not behaviors[path].get("FunctionAssociations")
+    policies = {key: value["Properties"]["CachePolicyConfig"] for key, value in resources.items() if value["Type"] == "AWS::CloudFront::CachePolicy"}
+    api_cache = policies[behaviors['/api/demos']['CachePolicyId']['Ref']]
+    assert api_cache['MinTTL'] == 0 and api_cache['MaxTTL'] == 15
+    media_cache = policies[behaviors['/tracks/*']['CachePolicyId']['Ref']]
+    assert media_cache['MinTTL'] == 3600
+    assert media_cache['ParametersInCacheKeyAndForwardedToOrigin']['QueryStringsConfig'] == {'QueryStringBehavior': 'whitelist', 'QueryStrings': ['versionId']}
+    bucket_policies = [value['Properties']['PolicyDocument'] for value in resources.values() if value['Type'] == 'AWS::S3::BucketPolicy']
+    assert 's3:GetObjectVersion' in str(bucket_policies)
+    roles = [value['Properties']['PolicyDocument'] for value in resources.values() if value['Type'] == 'AWS::IAM::Policy']
+    assert 's3:ListBucketVersions' in str(roles)
     template.has_resource_properties("AWS::Lambda::Url", {"AuthType": "AWS_IAM"})
     permissions = [value["Properties"] for value in resources.values() if value["Type"] == "AWS::Lambda::Permission"]
     for action in ("lambda:InvokeFunctionUrl", "lambda:InvokeFunction"):

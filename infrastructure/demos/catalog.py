@@ -5,11 +5,18 @@ import logging
 import os
 import re
 from pathlib import PurePosixPath
+from functools import lru_cache
 from urllib.parse import quote
 
 
 AUDIO_EXTENSIONS = {".m4a", ".mp3", ".wav", ".ogg", ".flac", ".aac", ".opus"}
 logger = logging.getLogger(__name__)
+
+
+@lru_cache(maxsize=1)
+def s3_client():
+    import boto3  # Supplied by the AWS Lambda Python runtime.
+    return boto3.client("s3")
 
 
 def track_from_object(item):
@@ -19,12 +26,19 @@ def track_from_object(item):
         return None
     title = re.sub(r"[-_]+", " ", path.stem).strip().title()
     title = re.sub(r"\s+Take\s+(\d+)$", r" — Take \1", title)
-    version = item["ETag"].strip('"')
+    # Bind the URL to an actual S3 version, so CDN caching cannot mix an
+    # overwritten recording's old audio ranges with its new contents.
+    version = item.get("VersionId")
+    if version:
+        query = f"versionId={quote(version, safe='')}"
+    else:  # Local preview files have no S3 version ID.
+        etag = item["ETag"].strip('"')
+        query = f"v={quote(etag, safe='')}"
     return {
         "id": key,
         "title": title,
         "filename": path.name,
-        "url": f"/{quote(key, safe='/')}?v={quote(version, safe='')}",
+        "url": f"/{quote(key, safe='/')}?{query}",
         "updated": item["LastModified"].isoformat(),
         "bytes": item["Size"],
     }
@@ -33,22 +47,24 @@ def track_from_object(item):
 def response(status, body):
     return {
         "statusCode": status,
-        "headers": {"Content-Type": "application/json", "Cache-Control": "no-store"},
+        "headers": {"Content-Type": "application/json", "Cache-Control": "public, max-age=15, s-maxage=15" if status == 200 else "no-store"},
         "body": json.dumps(body, ensure_ascii=False),
     }
 
 
 def handler(event, context):
-    import boto3  # Supplied by the AWS Lambda Python runtime.
-
     try:
-        s3 = boto3.client("s3")
-        pages = s3.get_paginator("list_objects_v2").paginate(
+        s3 = s3_client()
+        pages = s3.get_paginator("list_object_versions").paginate(
             Bucket=os.environ["RECORDINGS_BUCKET"], Prefix="tracks/",
         )
         tracks = []
         for page in pages:
-            for item in page.get("Contents", []):
+            # A deletion makes all previous versions non-latest. Never expose
+            # old versions or resurrect a track behind a delete marker.
+            for item in page.get("Versions", []):
+                if not item.get("IsLatest"):
+                    continue
                 track = track_from_object(item)
                 if track:
                     tracks.append(track)

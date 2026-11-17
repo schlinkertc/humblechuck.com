@@ -24,6 +24,7 @@
     <link rel="icon" href="/favicon.ico" sizes="any">
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
     <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    <link rel="preload" href="/api/demos" as="fetch" crossorigin="anonymous">
     <link rel="stylesheet" href="/styles.css">
     <script src="/site.js" defer></script>
     <script src="/demos.js" defer></script>
@@ -45,8 +46,9 @@
         <div class="demo-deck">
           <div class="demo-deck-heading"><p class="eyebrow">Now cued</p><span class="demo-badge">HC / DEMOS</span></div>
           <h2 data-current-title>Finding the songs…</h2>
-          <audio controls preload="metadata" aria-label="Demo audio player" data-demo-audio></audio>
+          <audio controls preload="none" aria-label="Demo audio player" data-demo-audio></audio>
           <div class="demo-controls" aria-label="Track controls">
+            <button class="button button-primary" type="button" data-toggle-play disabled>Play</button>
             <button class="button" type="button" data-previous disabled aria-label="Previous track">← Previous</button>
             <button class="button" type="button" data-rewind disabled aria-label="Rewind 15 seconds">↶ 15s</button>
             <button class="button" type="button" data-forward disabled aria-label="Skip forward 15 seconds">15s ↷</button>

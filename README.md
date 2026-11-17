@@ -56,17 +56,28 @@ titles from filenames and lists tracks alphabetically. Replace the same filename
 to update a recording. Delete its current S3 object to remove it from the list.
 S3 versioning keeps old versions available for recovery.
 
-The page checks for changes every 60 seconds while visible and when returning to
-the tab. **Refresh** fetches changes immediately. Currently playing audio is not
-interrupted; the replacement is loaded when recued. Streaming and downloads are
-served through CloudFront without caching, so replacing a key does not require
-a CloudFront invalidation. Native audio controls provide play/pause, scrubbing,
-and volume, with previous/next and 15-second skip buttons alongside them.
+The page checks for changes every 30 seconds while visible and when returning to
+the tab. The catalog is cached for 15 seconds, so changes normally appear within
+45 seconds; **Refresh** checks the latest available catalog. Currently playing
+audio is not interrupted; the replacement is loaded when recued. Streaming and
+downloads use the exact S3 object version in each URL. This allows CDN caching
+without stale replacements or mixed byte ranges; replacing a key does not
+require a CloudFront invalidation. Old URLs may remain accessible because S3
+retains prior versions. The player has an explicit Play/Pause/Retry button plus
+native scrubbing and volume controls, previous/next, and 15-second skips. Audio
+starts loading on a user tap rather than during page initialization.
+
+The existing M4As are optimized for streaming (their playback index precedes the
+audio) without re-encoding. On macOS, new M4As can be prepared with
+`afconvert -f m4af -d 0 input.m4a optimized.m4a` before upload. The `0` data format
+copies compressed packets rather than re-encoding them. Unoptimized uploads still
+work, but can require more requests before playback starts. The site serves its
+existing Manrope and DM Mono fonts locally; licenses are in `site_src/fonts/`.
 
 The recordings bucket is private, retained on stack deletion, and separate from
 the website deployment's pruning. CloudFront uses Origin Access Control for both
-audio and the catalog Lambda URL. The catalog can only list `tracks/`, and only
-returns audio files. Everything in `tracks/` with a supported audio extension is
+audio and the catalog Lambda URL. The catalog can only list versions in `tracks/`,
+and only returns the latest nondeleted audio files. Everything in `tracks/` with a supported audio extension is
 publicly playable and downloadable through the website.
 
 On the first deployment, GitHub Actions uploads the supplied song from

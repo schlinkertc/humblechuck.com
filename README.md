@@ -65,7 +65,8 @@ without stale replacements or mixed byte ranges; replacing a key does not
 require a CloudFront invalidation. Old URLs may remain accessible because S3
 retains prior versions. The player has an explicit Play/Pause/Retry button plus
 native scrubbing and volume controls, previous/next, and 15-second skips. Audio
-starts loading on a user tap rather than during page initialization.
+preloading is set to `none`; browsers may still choose to fetch metadata. The
+explicit Play button prepares and starts playback within the user's tap.
 
 The existing M4As are optimized for streaming (their playback index precedes the
 audio) without re-encoding. On macOS, new M4As can be prepared with

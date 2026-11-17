@@ -242,6 +242,7 @@ def build() -> Path:
         "styles.css",
         "site.js",
         "demos.js",
+        "demos-preview-v1.png",
         "og.png",
         "hc-logo.png",
         "favicon.ico",

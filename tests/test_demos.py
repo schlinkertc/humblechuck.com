@@ -75,6 +75,7 @@ def test_demos_build_has_player_and_no_bundled_recordings():
     assert 'src="/demos.js"' in demos
     assert 'preload="none"' in demos
     assert 'data-toggle-play' in demos
+    assert 'data-refresh' not in demos
     assert 'href="/api/demos" as="fetch"' in demos
     assert (output / "fonts" / "manrope-400-600-latin.woff2").read_bytes()[:4] == b'wOF2'
     assert 'fonts.googleapis.com' not in (output / 'styles.css').read_text()

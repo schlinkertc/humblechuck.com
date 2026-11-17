@@ -7,7 +7,8 @@
   const download = find("[data-current-download]");
   const list = find("[data-track-list]");
   const status = find("[data-demo-status]");
-  const refresh = find("[data-refresh]");
+  const shareFallback = find("[data-share-fallback]");
+  const shareInput = find("[data-share-url]");
   const previous = find("[data-previous]");
   const next = find("[data-next]");
   const rewind = find("[data-rewind]");
@@ -18,6 +19,80 @@
   let loading = false;
   let needsReload = false;
   let playAttempt = 0;
+  let songAnchors = new Map();
+  let shareTrigger = null;
+
+  function buildSongAnchors() {
+    // Derive links from filenames, so changing a recording's S3 version does
+    // not change its public song link. Include folders to avoid common clashes.
+    const bases = tracks.map(track => track.id.replace(/^tracks\//, "").replace(/\.[^.]+$/, "")
+      .normalize("NFKD").replace(/[\u0300-\u036f]/g, "").toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || "song")
+      .map(base => ["main", "page-title"].includes(base) ? `song-${base}` : base);
+    const counts = new Map();
+    bases.forEach(base => counts.set(base, (counts.get(base) || 0) + 1));
+    songAnchors = new Map(tracks.map((track, index) => [track.id,
+      counts.get(bases[index]) === 1 ? bases[index] : `${bases[index]}--${encodeURIComponent(track.id)}`,
+    ]));
+  }
+
+  function songUrl(track) {
+    const url = new URL("/demos", window.location.origin);
+    url.hash = songAnchors.get(track.id);
+    return url.href;
+  }
+
+  function updateSongHash(track) {
+    if (songAnchors.has(track.id)) window.history.replaceState(null, "", songUrl(track));
+  }
+
+  function linkedSong() {
+    let hash;
+    try { hash = decodeURIComponent(window.location.hash.slice(1)); }
+    catch { return { requested: true }; }
+    if (!hash || hash === "main" || hash === "page-title") return { requested: false };
+    return {
+      requested: true,
+      track: tracks.find(track => decodeURIComponent(songAnchors.get(track.id)) === hash),
+    };
+  }
+
+  function cueLinkedSong() {
+    const linked = linkedSong();
+    if (linked.track) {
+      select(linked.track, false, false);
+      status.textContent = "";
+      library.scrollIntoView({ block: "start" });
+    } else if (linked.requested) {
+      status.textContent = "That recording isn’t available. Choose another song below.";
+      if (!current) title.textContent = "Recording not found.";
+    }
+    return linked.requested;
+  }
+
+  async function shareSong(track, trigger) {
+    shareFallback.hidden = true;
+    const url = songUrl(track);
+    if (navigator.share) {
+      try {
+        await navigator.share({ title: track.title, url });
+        return;
+      } catch (error) {
+        if (error.name === "AbortError") return; // Dismissing the sheet is normal.
+      }
+    }
+    try {
+      await navigator.clipboard.writeText(url);
+      status.textContent = `Link copied for “${track.title}”.`;
+    } catch {
+      // Clipboard permissions can be denied; keep a normal selectable URL.
+      shareTrigger = trigger;
+      shareInput.value = url;
+      shareFallback.hidden = false;
+      shareInput.focus();
+      shareInput.select();
+    }
+  }
 
   function renderPlayButton() {
     toggle.disabled = !current;
@@ -55,7 +130,7 @@
     }
   }
 
-  function select(track, autoplay = false) {
+  function select(track, autoplay = false, updateHash = true) {
     const changed = current?.url !== track.url;
     current = track;
     title.textContent = track.title;
@@ -69,6 +144,7 @@
     download.href = track.url;
     download.download = track.filename;
     download.hidden = false;
+    if (updateHash) updateSongHash(track);
     renderSelection();
     if (autoplay) play();
   }
@@ -83,6 +159,7 @@
     const fragment = document.createDocumentFragment();
     tracks.forEach((track, index) => {
       const row = document.createElement("li");
+      row.id = decodeURIComponent(songAnchors.get(track.id));
       const button = document.createElement("button");
       button.type = "button";
       button.dataset.trackId = track.id;
@@ -102,7 +179,20 @@
       link.download = track.filename;
       link.textContent = "↓";
       link.setAttribute("aria-label", `Download ${track.title}`);
-      row.append(button, link);
+      const share = document.createElement("a");
+      share.className = "demo-track-share";
+      share.href = songUrl(track);
+      share.textContent = "Share";
+      share.setAttribute("aria-label", `Share ${track.title}`);
+      share.addEventListener("click", event => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey || event.button > 0) return;
+        event.preventDefault();
+        shareSong(track, share);
+      });
+      const actions = document.createElement("div");
+      actions.className = "demo-track-actions";
+      actions.append(share, link);
+      row.append(button, actions);
       fragment.append(row);
     });
     list.replaceChildren(fragment);
@@ -113,7 +203,6 @@
   async function loadTracks() {
     if (loading) return;
     loading = true;
-    refresh.disabled = true;
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
     try {
@@ -129,15 +218,16 @@
       });
       if (!valid) throw new Error("Invalid recording URL");
       tracks = data.tracks;
+      buildSongAnchors();
       renderTracks();
       status.textContent = tracks.length ? "" : "No recordings here yet. Check back soon.";
-      if (!current && tracks.length) select(tracks[0]);
+      if (!current && tracks.length && !cueLinkedSong()) select(tracks[0], false, false);
       // Keep uninterrupted playback during a refresh. A paused, replaced song
       // is recued with the latest object version; removed tracks are cleared.
       if (current && audio.paused) {
         const latest = tracks.find((track) => track.id === current.id);
         if (!latest) {
-          if (tracks.length) select(tracks[0]);
+          if (tracks.length) select(tracks[0], false, false);
           else {
             current = null;
             audio.removeAttribute("src");
@@ -146,18 +236,17 @@
             download.hidden = true;
             renderSelection();
           }
-        } else if (latest.url !== current.url) select(latest);
+        } else if (latest.url !== current.url) select(latest, false, false);
       }
       if (!tracks.length && !current) title.textContent = "More songs soon.";
     } catch (error) {
       status.textContent = tracks.length
-        ? "Couldn’t refresh the recordings. You can keep listening or try Refresh."
-        : "The recordings couldn’t load. Please try Refresh in a moment.";
+        ? "Couldn’t update the recordings. You can keep listening or reload the page."
+        : "The recordings couldn’t load. Please reload the page in a moment.";
       if (!current) title.textContent = "A little quiet right now.";
     } finally {
       clearTimeout(timeout);
       loading = false;
-      refresh.disabled = false;
     }
   }
 
@@ -180,7 +269,12 @@
     renderPlayButton();
   });
   ["play", "pause", "ended", "emptied"].forEach(event => audio.addEventListener(event, renderPlayButton));
-  refresh.addEventListener("click", loadTracks);
+  audio.addEventListener("play", () => { if (current) updateSongHash(current); });
+  find("[data-close-share]").addEventListener("click", () => {
+    shareFallback.hidden = true;
+    shareTrigger?.focus();
+  });
+  window.addEventListener("hashchange", () => { if (tracks.length) cueLinkedSong(); });
   document.addEventListener("visibilitychange", () => { if (!document.hidden) loadTracks(); });
   setInterval(() => { if (!document.hidden) loadTracks(); }, 30000);
   loadTracks();

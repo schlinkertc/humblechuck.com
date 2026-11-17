@@ -245,7 +245,10 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding-block
 .demo-queue-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
 .demo-queue-heading h3 { font: 500 .75rem var(--mono); text-transform: uppercase; letter-spacing: .08em; }
 .demo-queue-heading h3 span { opacity: .6; }
-.demo-queue-heading button { min-height: 44px; }
+.demo-share-fallback { margin: 1rem 0; }
+.demo-share-fallback label { display: block; margin-bottom: .5rem; font-size: .85rem; }
+.demo-share-fallback input { display: block; width: 100%; min-width: 0; padding: .75rem; border: 1px solid var(--ink); background: var(--paper); color: var(--ink); font: .85rem var(--sans); }
+.demo-share-fallback .button { margin-top: .75rem; min-height: 44px; }
 .demo-status { font-size: .85rem; line-height: 1.6; }
 .demo-status:empty { margin: 1.25rem 0 0; }
 .demo-track-list { padding: 0; margin: 1rem 0 0; list-style: none; }
@@ -257,6 +260,9 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding-block
 .demo-track[aria-current] .demo-track-number { opacity: 1; }
 .demo-track-download { display: grid; place-items: center; flex: 0 0 48px; font-size: 1.4rem; text-decoration: none; }
 .demo-track-download:hover { background: var(--acid); }
+.demo-track-actions { display: flex; align-items: stretch; flex: 0 0 auto; }
+.demo-track-share { display: grid; place-items: center; padding-inline: .5rem; min-width: 48px; min-height: 44px; font: .7rem var(--mono); }
+.demo-track-share:hover { background: var(--paper-deep); }
 .demo-library :focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
 .demos-page .cross-link { padding-top: 0; }
 @media (max-width: 780px) {

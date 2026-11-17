@@ -11,7 +11,9 @@ const settle = () => new Promise(resolve => setImmediate(resolve));
 class Element {
   constructor() { this.children = []; this.dataset = {}; this.attrs = {}; this.events = {}; this.textContent = ''; }
   addEventListener(name, fn) { (this.events[name] ??= []).push(fn); }
-  emit(name) { for (const fn of this.events[name] ?? []) fn(); }
+  emit(name) { for (const fn of this.events[name] ?? []) fn({ preventDefault() {} }); }
+  focus() { this.focused = true; }
+  select() { this.selected = true; }
   setAttribute(k, v) { this.attrs[k] = v; }
   removeAttribute(k) { delete this.attrs[k]; }
   append(...children) { this.children.push(...children); }
@@ -19,7 +21,7 @@ class Element {
   querySelectorAll() { return this.children.flatMap(row => row.children).filter(e => e.dataset.trackId); }
 }
 
-async function player(initial = [song('first'), song('second')]) {
+async function player(initial = [song('first'), song('second')], options = {}) {
   const nodes = new Map();
   const find = selector => { if (!nodes.has(selector)) nodes.set(selector, new Element()); return nodes.get(selector); };
   const audio = find('[data-demo-audio]');
@@ -34,19 +36,30 @@ async function player(initial = [song('first'), song('second')]) {
   };
   audio.pause = () => { audio.paused = true; audio.emit('pause'); };
   let catalog = initial;
-  const library = { querySelector: find };
+  const library = { querySelector: find, scrollIntoView() { library.scrolled = true; } };
   const document = { hidden: false, querySelector: () => library, createElement: () => new Element(), createDocumentFragment: () => new Element(), addEventListener() {} };
+  const location = { origin: 'https://example.com', hash: options.hash ?? '' };
+  const windowEvents = {};
+  const copied = [];
+  const navigator = options.navigator ?? { clipboard: { writeText: async text => copied.push(text) } };
+  let poll;
   vm.runInNewContext(source, {
-    document, window: { location: { origin: 'https://example.com' } }, URL, AbortController,
-    setTimeout: () => 1, clearTimeout() {}, setInterval() {},
+    document, navigator, window: {
+      location,
+      history: { replaceState(_, __, url) { location.hash = new URL(url).hash; } },
+      addEventListener(name, fn) { windowEvents[name] = fn; },
+    }, URL, AbortController,
+    setTimeout: () => 1, clearTimeout() {}, setInterval(fn) { poll = fn; },
     fetch: async () => ({ ok: true, json: async () => ({ tracks: catalog }) }),
   });
   await settle();
   return {
-    audio, find,
+    audio, find, location, copied, library,
     click(element) { gesture = true; try { element.emit('click'); } finally { gesture = false; } },
     rows: () => find('[data-track-list]').querySelectorAll(),
-    async refresh(next = catalog) { catalog = next; find('[data-refresh]').emit('click'); await settle(); },
+    shares: () => find('[data-track-list]').children.map(row => row.children[1].children[0]),
+    async refresh(next = catalog) { catalog = next; poll(); await settle(); },
+    async navigate(hash) { location.hash = hash; windowEvents.hashchange(); await settle(); },
   };
 }
 
@@ -107,4 +120,68 @@ test('an old play failure cannot overwrite a successful new track selection', as
   rejectOld(new Error('old playback failed')); await settle();
   assert.equal(p.find('[data-demo-status]').textContent, '');
   assert.equal(p.find('[data-toggle-play]').textContent, 'Pause');
+});
+
+test('incoming song links cue the requested song without autoplay', async () => {
+  const p = await player(undefined, { hash: '#second' });
+  assert.equal(p.audio.src, song('second').url);
+  assert.equal(p.audio.calls.length, 0);
+  assert.equal(p.library.scrolled, true);
+  await p.navigate('#first');
+  assert.equal(p.audio.src, song('first').url);
+  assert.equal(p.audio.calls.length, 0);
+});
+
+test('missing or malformed song links do not silently select the first song', async () => {
+  for (const hash of ['#missing', '#%malformed']) {
+    const p = await player(undefined, { hash });
+    assert.equal(p.audio.src, undefined);
+    assert.match(p.find('[data-demo-status]').textContent, /isn’t available/);
+    assert.equal(p.find('[data-toggle-play]').disabled, true);
+    p.click(p.rows()[1]); await settle();
+    assert.equal(p.location.hash, '#second');
+  }
+});
+
+test('share links copy stable song URLs, independent of S3 versions', async () => {
+  const p = await player([song('all-the-flowers')]);
+  p.click(p.shares()[0]); await settle();
+  assert.deepEqual(p.copied, ['https://example.com/demos#all-the-flowers']);
+  assert.match(p.find('[data-demo-status]').textContent, /Link copied/);
+  await p.refresh([song('all-the-flowers', 'replacement')]);
+  assert.equal(p.shares()[0].href, 'https://example.com/demos#all-the-flowers');
+});
+
+test('native sharing uses the selected song, and cancellation does not copy', async () => {
+  const shared = []; const copied = [];
+  const p = await player(undefined, { navigator: {
+    share: async data => { shared.push(data); throw Object.assign(new Error(), { name: 'AbortError' }); },
+    clipboard: { writeText: async text => copied.push(text) },
+  } });
+  p.click(p.shares()[1]); await settle();
+  assert.equal(shared[0].url, 'https://example.com/demos#second');
+  assert.equal(shared[0].title, 'second');
+  assert.equal(copied.length, 0);
+  assert.equal(p.audio.calls.length, 0, 'sharing must not start or change playback');
+});
+
+test('clipboard denial exposes a selectable song link', async () => {
+  const p = await player(undefined, { navigator: {} });
+  p.click(p.shares()[1]); await settle();
+  assert.equal(p.find('[data-share-fallback]').hidden, false);
+  assert.equal(p.find('[data-share-url]').value, 'https://example.com/demos#second');
+  assert.equal(p.find('[data-share-url]').selected, true);
+  p.click(p.find('[data-close-share]'));
+  assert.equal(p.find('[data-share-fallback]').hidden, true);
+});
+
+test('song links distinguish colliding names and preserve reserved page anchors', async () => {
+  const items = [song('Café'), song('cafe'), song('main')];
+  const p = await player(items, { hash: '#main' });
+  const links = p.shares().map(link => link.href);
+  assert.equal(new Set(links).size, 3);
+  for (let i = 0; i < items.length; i++) {
+    await p.navigate(new URL(links[i]).hash);
+    assert.equal(p.audio.src, items[i].url);
+  }
 });

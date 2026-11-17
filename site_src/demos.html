@@ -57,8 +57,13 @@
           <a class="demo-current-download" data-current-download hidden>Download this recording ↓</a>
         </div>
         <div class="demo-queue">
-          <div class="demo-queue-heading"><h3>Recordings <span data-track-count></span></h3><button class="button" type="button" data-refresh>Refresh</button></div>
+          <div class="demo-queue-heading"><h3>Recordings <span data-track-count></span></h3></div>
           <p class="demo-status" role="status" aria-live="polite" data-demo-status>Loading recordings…</p>
+          <div class="demo-share-fallback" data-share-fallback hidden>
+            <label for="song-share-url">Copy this song link</label>
+            <input id="song-share-url" type="url" readonly data-share-url>
+            <button class="button" type="button" data-close-share>Close</button>
+          </div>
           <ol class="demo-track-list" data-track-list></ol>
           <noscript><p>Enable JavaScript to load the recordings and use the player.</p></noscript>
         </div>

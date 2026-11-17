@@ -58,7 +58,7 @@ S3 versioning keeps old versions available for recovery.
 
 The page checks for changes every 30 seconds while visible and when returning to
 the tab. The catalog is cached for 15 seconds, so changes normally appear within
-45 seconds; **Refresh** checks the latest available catalog. Currently playing
+45 seconds; the browser's Reload action also checks the catalog. Currently playing
 audio is not interrupted; the replacement is loaded when recued. Streaming and
 downloads use the exact S3 object version in each URL. This allows CDN caching
 without stale replacements or mixed byte ranges; replacing a key does not
@@ -67,6 +67,15 @@ retains prior versions. The player has an explicit Play/Pause/Retry button plus
 native scrubbing and volume controls, previous/next, and 15-second skips. Audio
 preloading is set to `none`; browsers may still choose to fetch metadata. The
 explicit Play button prepares and starts playback within the user's tap.
+
+Each recording has a **Share** link beside its download link. Sharing opens the
+device's native share sheet when supported, otherwise copies the link; if clipboard
+access is blocked, a selectable link is shown. URLs such as
+`https://humblechuck.com/demos#all-the-flowers` cue the named recording after the
+catalog loads without autoplaying. Links are based on filenames and survive audio
+replacements; renaming a file changes its song link. Missing song links show a
+message rather than silently cueing another recording. Ambiguous filenames get
+distinct links containing their full S3 keys.
 
 The existing M4As are optimized for streaming (their playback index precedes the
 audio) without re-encoding. On macOS, new M4As can be prepared with

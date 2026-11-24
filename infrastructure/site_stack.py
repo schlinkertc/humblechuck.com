@@ -120,7 +120,6 @@ class HumbleChuckSiteStack(Stack):
             code=lambda_.Code.from_asset(str(Path(__file__).parent / "demos"), exclude=["__pycache__", "*.pyc"]),
             memory_size=128,
             timeout=Duration.seconds(10),
-            reserved_concurrent_executions=2,
             log_group=logs.LogGroup(self, "DemoPlaysLogs", retention=logs.RetentionDays.ONE_MONTH),
             environment={"PLAY_EVENTS_TABLE": play_events.table_name, "RECORDINGS_BUCKET": recordings.bucket_name},
         )

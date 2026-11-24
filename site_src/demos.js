@@ -22,19 +22,26 @@
   let playAttempt = 0;
   let songAnchors = new Map();
   let shareTrigger = null;
-  const playStates = new Map();
+  const pendingPlays = new Map();
+  let activePlay = null;
   let listening = null;
+  let lastPosition = 0;
   let countRequest = 0;
+  let countController = null;
+  let displayedCount = null;
 
   function renderCount(id, count) {
     if (current?.id !== id || !Number.isSafeInteger(count) || count < 0) return;
-    playCount.textContent = `${count.toLocaleString()} ${count === 1 ? "play" : "plays"}`;
+    displayedCount = Math.max(displayedCount ?? 0, count);
+    playCount.textContent = `${displayedCount.toLocaleString()} ${displayedCount === 1 ? "play" : "plays"}`;
     playCount.hidden = false;
   }
 
   async function loadCount(track) {
     const request = ++countRequest;
+    countController?.abort();
     const controller = new AbortController();
+    countController = controller;
     const timeout = setTimeout(() => controller.abort(), 5000);
     try {
       const response = await fetch(`/api/demo-plays?demo_id=${encodeURIComponent(track.id)}`, {
@@ -44,30 +51,39 @@
       const data = await response.json();
       if (request === countRequest) renderCount(track.id, data.plays);
     } catch { /* Counting must never interfere with listening. */ }
-    finally { clearTimeout(timeout); }
-  }
-
-  function playState(id) {
-    if (!playStates.has(id)) {
-      const state = { seconds: 0, source: null, payload: null, sent: false, attempts: 0, inFlight: false };
-      try {
-        const saved = JSON.parse(sessionStorage.getItem(`hc:demo-play:v1:${id}`));
-        if (saved?.payload?.demo_id === id && typeof saved.payload.event_id === "string") {
-          state.payload = saved.payload;
-          state.sent = saved.sent === true;
-        }
-      } catch { /* Private browsing or disabled storage: use this page's memory. */ }
-      playStates.set(id, state);
+    finally {
+      clearTimeout(timeout);
+      if (countController === controller) countController = null;
     }
-    return playStates.get(id);
   }
 
-  function savePlay(state) {
+  function newPlay(payload = null) {
+    return { seconds: 0, payload, sent: false, attempts: 0, inFlight: false };
+  }
+
+  function savePendingPlays() {
     try {
-      sessionStorage.setItem(`hc:demo-play:v1:${state.payload.demo_id}`, JSON.stringify({
-        payload: state.payload, sent: state.sent,
-      }));
-    } catch { /* An unavailable session store must not break playback. */ }
+      sessionStorage.setItem("hc:demo-plays:pending:v2", JSON.stringify(
+        Array.from(pendingPlays.values(), state => state.payload),
+      ));
+    } catch { /* Private browsing or disabled storage: use this page's memory. */ }
+  }
+
+  function restorePendingPlays() {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem("hc:demo-plays:pending:v2"));
+      if (!Array.isArray(saved)) return;
+      for (const payload of saved) {
+        if (typeof payload?.event_id !== "string" || typeof payload.demo_id !== "string") continue;
+        pendingPlays.set(payload.event_id, newPlay(payload));
+      }
+      pendingPlays.forEach(sendPlay);
+    } catch { /* Analytics storage is optional. */ }
+  }
+
+  function forgetPendingPlay(state) {
+    pendingPlays.delete(state.payload.event_id);
+    savePendingPlays();
   }
 
   async function sendPlay(state) {
@@ -89,10 +105,11 @@
       });
       if (!response.ok) {
         retry = response.status === 429 || response.status >= 500;
+        if (!retry) forgetPendingPlay(state);
       } else {
         const data = await response.json();
         state.sent = true;
-        savePlay(state);
+        forgetPendingPlay(state);
         if (current?.id === state.payload.demo_id) {
           ++countRequest; // An earlier count request must not overwrite this total.
           renderCount(state.payload.demo_id, data.plays);
@@ -119,7 +136,8 @@
         const referrer = new URL(document.referrer);
         if (referrer.hostname !== new URL(window.location.origin).hostname) state.payload.referrer_host = referrer.hostname;
       } catch { /* No external referrer. */ }
-      savePlay(state); // Persist the ID BEFORE the first request, including retries.
+      pendingPlays.set(state.payload.event_id, state);
+      savePendingPlays(); // Preserve retry IDs without suppressing a later listen.
       sendPlay(state);
     }
   }
@@ -132,11 +150,12 @@
     // Count time while audio advances, capped by elapsed wall time. Seeking,
     // stalls, pauses, and faster playback cannot manufacture listening time.
     if (advanced > 0) {
-      const state = playState(current.id);
+      const state = activePlay ??= newPlay();
       state.seconds += Math.min(advanced / (audio.playbackRate || 1), elapsed);
       qualifyPlay(current, state);
     }
     listening = { position: audio.currentTime, time: now };
+    lastPosition = audio.currentTime;
   }
 
   function stopListening() {
@@ -254,17 +273,17 @@
 
   function select(track, autoplay = false, updateHash = true) {
     const changed = current?.url !== track.url;
-    if (changed) stopListening();
+    if (changed) {
+      stopListening();
+      activePlay = null;
+      lastPosition = 0;
+    }
     current = track;
     title.textContent = track.title;
     if (changed) {
       playCount.hidden = true;
+      displayedCount = null;
       loadCount(track);
-      // A previously qualified event may still be awaiting acknowledgement.
-      const state = playState(track.id);
-      if (state.source !== track.url) state.seconds = 0;
-      state.source = track.url;
-      sendPlay(state);
       ++playAttempt;
       needsReload = false;
       audio.src = track.url;
@@ -361,6 +380,8 @@
           else {
             stopListening();
             current = null;
+            activePlay = null;
+            displayedCount = null;
             ++countRequest;
             playCount.hidden = true;
             audio.removeAttribute("src");
@@ -384,11 +405,28 @@
   }
 
   audio.addEventListener("playing", () => {
+    activePlay ??= newPlay();
+    lastPosition = audio.currentTime;
     listening = { position: audio.currentTime, time: performance.now() };
   });
-  audio.addEventListener("timeupdate", sampleListening);
+  audio.addEventListener("timeupdate", () => {
+    sampleListening();
+    lastPosition = audio.currentTime;
+  });
   ["pause", "waiting", "ended", "error"].forEach(event => audio.addEventListener(event, stopListening));
-  ["seeking", "emptied", "ratechange"].forEach(event => audio.addEventListener(event, () => { listening = null; }));
+  audio.addEventListener("ended", () => { activePlay = null; });
+  audio.addEventListener("emptied", () => {
+    listening = activePlay = null;
+    lastPosition = 0;
+  });
+  audio.addEventListener("seeking", () => {
+    // Returning to the beginning is a replay. Ordinary scrubbing and
+    // pause/resume continue the current listen, including its retry ID.
+    if (audio.currentTime <= 1 && lastPosition > 1) activePlay = null;
+    listening = null;
+    lastPosition = audio.currentTime;
+  });
+  audio.addEventListener("ratechange", () => { listening = null; });
   const resumeListening = () => {
     if (!audio.paused && !audio.seeking && audio.readyState >= 3) {
       listening = { position: audio.currentTime, time: performance.now() };
@@ -422,7 +460,13 @@
     shareTrigger?.focus();
   });
   window.addEventListener("hashchange", () => { if (tracks.length) cueLinkedSong(); });
-  document.addEventListener("visibilitychange", () => { if (!document.hidden) loadTracks(); });
-  setInterval(() => { if (!document.hidden) loadTracks(); }, 30000);
+  const refresh = () => {
+    if (document.hidden) return;
+    loadTracks();
+    if (current) loadCount(current);
+  };
+  document.addEventListener("visibilitychange", refresh);
+  setInterval(refresh, 30000);
+  restorePendingPlays();
   loadTracks();
 })();

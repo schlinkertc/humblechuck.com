@@ -51,7 +51,7 @@ def test_recordings_have_private_storage_and_versioned_cloudfront_caching(tmp_pa
     assert table["GlobalSecondaryIndexes"][0]["KeySchema"] == [{"AttributeName": "pk", "KeyType": "HASH"}, {"AttributeName": "played_at", "KeyType": "RANGE"}]
     plays_lambda = next(value for value in resources.values() if value["Type"] == "AWS::Lambda::Function" and value["Properties"].get("Handler") == "plays.handler")
     assert plays_lambda["Properties"]["Environment"]["Variables"]["PLAY_EVENTS_TABLE"] == {"Ref": play_table_id}
-    assert plays_lambda["Properties"]["ReservedConcurrentExecutions"] == 2
+    assert "ReservedConcurrentExecutions" not in plays_lambda["Properties"]
     plays_behavior = behaviors["/api/demo-plays"]
     assert "POST" in plays_behavior["AllowedMethods"]
     assert plays_behavior["CachePolicyId"] == cloudfront.CachePolicy.CACHING_DISABLED.cache_policy_id

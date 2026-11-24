@@ -33,6 +33,7 @@ async function player(initial = [song('first'), song('second')], options = {}) {
   audio.play = () => {
     audio.calls.push({ gesture, src: audio.src });
     assert.equal(gesture, true, 'play must be called synchronously during the tap');
+    if (audio.ended) { audio.currentTime = 0; audio.ended = false; }
     audio.paused = false; audio.readyState = 4; audio.emit('play'); audio.emit('playing');
     return Promise.resolve();
   };
@@ -47,6 +48,8 @@ async function player(initial = [song('first'), song('second')], options = {}) {
   const storage = options.storage ?? new Map();
   const requests = [];
   const timers = new Map();
+  const countedEvents = new Set();
+  let total = 0;
   let timerId = 0;
   let poll;
   vm.runInNewContext(source, {
@@ -67,7 +70,11 @@ async function player(initial = [song('first'), song('second')], options = {}) {
       if (url === '/api/demos') return { ok: true, json: async () => ({ tracks: catalog }) };
       if (init.method === 'POST' && options.onPlay) return options.onPlay(url, init);
       if (!init.method && options.onCount) return options.onCount(url, init);
-      return { ok: true, status: 200, json: async () => ({ plays: init.method === 'POST' ? 1 : 0 }) };
+      if (init.method === 'POST') {
+        const id = JSON.parse(init.body).event_id;
+        if (!countedEvents.has(id)) { countedEvents.add(id); total++; }
+      }
+      return { ok: true, status: 200, json: async () => ({ plays: total }) };
     },
   });
   await settle();
@@ -262,19 +269,91 @@ test('listening is measured per track and faster playback cannot qualify early',
   assert.equal(p.playRequests().length, 1);
   assert.equal(JSON.parse(p.playRequests()[0].body).demo_id, song('second').id);
   p.click(p.rows()[0]); await p.listen(4);
+  assert.equal(p.playRequests().length, 1, 'switching back starts a new listen with its own threshold');
+  await p.listen(6);
   assert.equal(p.playRequests().length, 2);
 });
 
-test('qualified plays survive reloads in the same session and pending retries reuse IDs', async () => {
+test('reloading allows a new listen while pending retries preserve the old event ID', async () => {
   const p = await player(); p.click(p.find('[data-toggle-play]')); await p.listen(10);
   const reloaded = await player(undefined, { storage: p.storage });
   reloaded.click(reloaded.find('[data-toggle-play]')); await reloaded.listen(10);
-  assert.equal(reloaded.playRequests().length, 0, 'already acknowledged in this session');
+  assert.equal(reloaded.playRequests().length, 1);
+  assert.notEqual(JSON.parse(reloaded.playRequests()[0].body).event_id, JSON.parse(p.playRequests()[0].body).event_id);
+  assert.deepEqual(JSON.parse(p.storage.get('hc:demo-plays:pending:v2')), [], 'acknowledged plays leave no suppression marker');
 
   const failed = await player(undefined, { onPlay: async () => { throw Error('offline'); } });
   failed.click(failed.find('[data-toggle-play]')); await failed.listen(10);
   const pending = await player(undefined, { storage: failed.storage });
   assert.equal(pending.playRequests()[0].body, failed.playRequests()[0].body);
+  pending.click(pending.find('[data-toggle-play]')); await pending.listen(10);
+  assert.equal(pending.playRequests().length, 2, 'restoring a retry must not suppress this new listen');
+  assert.notEqual(JSON.parse(pending.playRequests()[0].body).event_id, JSON.parse(pending.playRequests()[1].body).event_id);
+});
+
+test('replays after completion and switching away and back count as separate plays', async () => {
+  const p = await player([song('first')]);
+  p.click(p.find('[data-toggle-play]')); await p.listen(10);
+  p.audio.currentTime = p.audio.duration; p.audio.ended = true; p.audio.paused = true; p.audio.emit('ended');
+  p.click(p.find('[data-toggle-play]')); await p.listen(9);
+  assert.equal(p.playRequests().length, 1);
+  await p.listen(1);
+  assert.equal(p.playRequests().length, 2);
+  assert.equal(p.find('[data-play-count]').textContent, '2 plays');
+  assert.notEqual(JSON.parse(p.playRequests()[0].body).event_id, JSON.parse(p.playRequests()[1].body).event_id);
+
+  const q = await player(); q.click(q.rows()[0]); await q.listen(10);
+  q.click(q.rows()[1]); await q.listen(3);
+  q.click(q.rows()[0]); await q.listen(10);
+  assert.equal(q.playRequests().length, 2);
+  assert.equal(new Set(q.playRequests().map(r => JSON.parse(r.body).event_id)).size, 2);
+});
+
+test('a deliberate restart counts again while pause/resume and ordinary scrubbing do not', async () => {
+  const p = await player(); p.click(p.find('[data-toggle-play]')); await p.listen(10);
+  p.audio.pause(); p.click(p.find('[data-toggle-play]')); await p.listen(10);
+  p.audio.currentTime = 80; p.audio.emit('seeking'); p.audio.emit('seeked'); await p.listen(10);
+  assert.equal(p.playRequests().length, 1);
+  p.audio.currentTime = 0; p.audio.emit('seeking'); p.audio.emit('seeked');
+  await p.listen(9);
+  assert.equal(p.playRequests().length, 1);
+  await p.listen(1);
+  assert.equal(p.playRequests().length, 2);
+});
+
+test('multiple failed plays of the same song keep independent pending IDs', async () => {
+  const p = await player(undefined, { onPlay: async () => ({ ok: false, status: 503 }) });
+  p.click(p.find('[data-toggle-play]')); await p.listen(10);
+  p.audio.currentTime = 0; p.audio.emit('seeking'); p.audio.emit('seeked'); await p.listen(10);
+  const pending = JSON.parse(p.storage.get('hc:demo-plays:pending:v2'));
+  assert.equal(pending.length, 2);
+  assert.equal(new Set(pending.map(event => event.event_id)).size, 2);
+  await p.retry();
+  assert.equal(JSON.parse(p.playRequests()[2].body).event_id, pending[0].event_id);
+  assert.equal(JSON.parse(p.storage.get('hc:demo-plays:pending:v2')).length, 2);
+});
+
+test('old session acknowledgement markers no longer suppress plays', async () => {
+  const storage = new Map([['hc:demo-play:v1:tracks/first.m4a', JSON.stringify({
+    payload: { demo_id: 'tracks/first.m4a', event_id: webcrypto.randomUUID() }, sent: true,
+  })]]);
+  const p = await player(undefined, { storage });
+  p.click(p.find('[data-toggle-play]')); await p.listen(10);
+  assert.equal(p.playRequests().length, 1);
+});
+
+test('periodic refresh picks up other listeners without interrupting playback or decreasing counts', async () => {
+  let count = 5;
+  const p = await player(undefined, { onCount: async () => ({ ok: true, json: async () => ({ plays: count }) }) });
+  p.click(p.find('[data-toggle-play]'));
+  const loads = p.audio.loads;
+  assert.equal(p.find('[data-play-count]').textContent, '5 plays');
+  count = 8; await p.refresh();
+  assert.equal(p.find('[data-play-count]').textContent, '8 plays');
+  assert.equal(p.audio.loads, loads);
+  assert.equal(p.audio.paused, false);
+  count = 7; await p.refresh();
+  assert.equal(p.find('[data-play-count]').textContent, '8 plays');
 });
 
 test('failed requests retry at most three times without inflating or interrupting playback', async () => {

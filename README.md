@@ -104,8 +104,13 @@ the sample is not copied into the static website build.
 ## Demo play events
 
 The player counts a **qualified play after 10 seconds of actual listening**,
-once per song per tab session. Pauses, buffering, and seeks do not add listening
-time. Counts also appear under the cued song's title. Replacing the audio at the
+once per listen. Replaying after a song ends, returning to it after selecting
+another song, reloading the page, or seeking back to the beginning (within the
+first second, from beyond the first second) starts a new listen with its own
+10-second threshold. Pause/resume, buffering, and ordinary scrubbing continue
+the same listen. Seeking does not add listening time, and a long listen only
+counts once. Counts appear under the cued song's title and refresh every 30
+seconds while the tab is visible, and on returning to it. Replacing the audio at the
 same S3 key keeps its total, while each event identifies the version played.
 Renaming a recording changes its ID and starts a new total.
 
@@ -113,11 +118,12 @@ The browser sends `POST /api/demo-plays` with a random UUID, demo ID, listening
 duration, track duration when known, recording version, page path, and external
 referral **hostname only** when available. The Lambda assigns `played_at` in UTC
 and the `qualified_play` event type. No visitor ID, email, cookie, IP address,
-full referrer URL, or user agent is stored in the play table. A random event ID
-and acknowledgement are saved in `sessionStorage` for retry/deduplication; this
-does not identify visitors across sessions. If browser storage is unavailable,
-deduplication lasts for the current page only. Partial listening progress is
-kept in memory, so a reload before qualification starts its 10 seconds again.
+full referrer URL, or user agent is stored in the play table. Only pending event
+payloads are saved in `sessionStorage`, using a separate UUID for each qualified
+listen. Acknowledged events leave the retry queue immediately; they never
+suppress subsequent listens. If browser storage is unavailable, retries last
+for the current page only. Partial listening progress is kept in memory, so a
+reload before qualification starts its 10 seconds again.
 
 One DynamoDB transaction conditionally inserts the event and increments both
 the all-time and UTC daily counters. Retries reuse the event ID, including after
@@ -125,8 +131,9 @@ a reload or across midnight, and cannot increment counters twice. Requests are
 retried up to three times per page load on network failures, HTTP 429, and server
 errors. Playback continues if analytics is unavailable. Counts are approximate:
 blocked requests can be missed and public browser events can be fabricated.
-The Lambda validates inputs and checks the recording exists in S3; its reserved
-concurrency is two to limit simultaneous work.
+The Lambda validates inputs and checks the recording exists in S3. It uses the
+account's shared Lambda concurrency rather than a per-function limit of two,
+so simultaneous listeners and counter reads can proceed together.
 
 `GET /api/demo-plays?demo_id=tracks%2Fpeace-i-seek-take-6.m4a` returns only the
 current total. Both API methods bypass CloudFront caching. The function URL is
@@ -151,8 +158,8 @@ it has no table scan, query, or delete permission. Table creation and endpoint
 deployment run through the existing GitHub Actions deployment on `main`.
 
 The local preview server simulates play totals in memory, with no AWS access.
-Restarting the server clears its counts; use a fresh tab session to test another
-play of the same song. This change adds play storage only; show content continues
+Restarting the server clears its counts; replay a song to test another qualified
+play in the same tab. This change adds play storage only; show content continues
 to come from the existing content files.
 
 ## Safety notes

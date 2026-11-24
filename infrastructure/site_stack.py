@@ -241,7 +241,9 @@ class HumbleChuckSiteStack(Stack):
             origin_request_policy=cloudfront.OriginRequestPolicy(
                 self, "DemoPlaysRequests",
                 query_string_behavior=cloudfront.OriginRequestQueryStringBehavior.allow_list("demo_id"),
-                header_behavior=cloudfront.OriginRequestHeaderBehavior.allow_list("Content-Type", "x-amz-content-sha256"),
+                # OAC consumes the viewer's payload hash when signing; AWS
+                # rejects x-amz-content-sha256 in an origin header allowlist.
+                header_behavior=cloudfront.OriginRequestHeaderBehavior.allow_list("Content-Type"),
                 cookie_behavior=cloudfront.OriginRequestCookieBehavior.none(),
             ),
         )

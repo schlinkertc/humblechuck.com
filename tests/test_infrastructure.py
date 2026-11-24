@@ -56,7 +56,9 @@ def test_recordings_have_private_storage_and_versioned_cloudfront_caching(tmp_pa
     assert "POST" in plays_behavior["AllowedMethods"]
     assert plays_behavior["CachePolicyId"] == cloudfront.CachePolicy.CACHING_DISABLED.cache_policy_id
     origin_policy = resources[plays_behavior["OriginRequestPolicyId"]["Ref"]]["Properties"]["OriginRequestPolicyConfig"]
-    assert origin_policy["HeadersConfig"] == {"HeaderBehavior": "whitelist", "Headers": ["Content-Type", "x-amz-content-sha256"]}
+    # CloudFront reserves x-amz-content-sha256 for OAC signing and rejects it
+    # in an explicit origin-request allowlist (a service-side validation).
+    assert origin_policy["HeadersConfig"] == {"HeaderBehavior": "whitelist", "Headers": ["Content-Type"]}
     assert origin_policy["QueryStringsConfig"] == {"QueryStringBehavior": "whitelist", "QueryStrings": ["demo_id"]}
     assert origin_policy["CookiesConfig"]["CookieBehavior"] == "none"
     dynamodb_statements = [statement for role in roles for statement in role["Statement"] if isinstance(statement.get("Action"), list) and any(action.startswith("dynamodb:") for action in statement["Action"])]

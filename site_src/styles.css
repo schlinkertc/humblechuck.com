@@ -237,6 +237,7 @@ footer { display: flex; justify-content: space-between; gap: 1rem; padding-block
 .demo-badge { font: .6rem var(--mono); border: 1px solid var(--ink); border-radius: 50%; padding: 1rem .65rem; white-space: nowrap; }
 .demo-deck h2 { margin: 2.5rem 0 2rem; font-size: clamp(2.3rem, 4vw, 4.7rem); line-height: 1.05; overflow-wrap: anywhere; }
 .demo-deck audio { width: 100%; display: block; }
+.demo-play-count { font-size: .875rem; margin: -1rem 0 1rem; }
 .demo-controls { display: flex; flex-wrap: wrap; gap: .5rem; margin: 1.25rem 0 2rem; }
 .demo-controls .button { flex: 1 1 auto; min-height: 44px; }
 .demo-library button:disabled { opacity: .4; cursor: default; }

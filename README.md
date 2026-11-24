@@ -101,6 +101,60 @@ For local playback QA, run `python scripts/preview_demos.py` after building.
 This serves the supplied recording locally and simulates the live catalog;
 the sample is not copied into the static website build.
 
+## Demo play events
+
+The player counts a **qualified play after 10 seconds of actual listening**,
+once per song per tab session. Pauses, buffering, and seeks do not add listening
+time. Counts also appear under the cued song's title. Replacing the audio at the
+same S3 key keeps its total, while each event identifies the version played.
+Renaming a recording changes its ID and starts a new total.
+
+The browser sends `POST /api/demo-plays` with a random UUID, demo ID, listening
+duration, track duration when known, recording version, page path, and external
+referral **hostname only** when available. The Lambda assigns `played_at` in UTC
+and the `qualified_play` event type. No visitor ID, email, cookie, IP address,
+full referrer URL, or user agent is stored in the play table. A random event ID
+and acknowledgement are saved in `sessionStorage` for retry/deduplication; this
+does not identify visitors across sessions. If browser storage is unavailable,
+deduplication lasts for the current page only. Partial listening progress is
+kept in memory, so a reload before qualification starts its 10 seconds again.
+
+One DynamoDB transaction conditionally inserts the event and increments both
+the all-time and UTC daily counters. Retries reuse the event ID, including after
+a reload or across midnight, and cannot increment counters twice. Requests are
+retried up to three times per page load on network failures, HTTP 429, and server
+errors. Playback continues if analytics is unavailable. Counts are approximate:
+blocked requests can be missed and public browser events can be fabricated.
+The Lambda validates inputs and checks the recording exists in S3; its reserved
+concurrency is two to limit simultaneous work.
+
+`GET /api/demo-plays?demo_id=tracks%2Fpeace-i-seek-take-6.m4a` returns only the
+current total. Both API methods bypass CloudFront caching. The function URL is
+IAM-protected and accepts invocations only through CloudFront OAC. POST requests
+include the SHA-256 of their exact body, as required by Lambda URL OAC; there
+are no AWS credentials in browser code.
+
+The stack output **DemoPlayEventsTableName** identifies the private, on-demand
+DynamoDB table. It is retained on deletion/replacement and has point-in-time
+recovery enabled. There is no automatic expiry of events or counters. To inspect
+data using your AWS account permissions, open DynamoDB → Explore items:
+
+- Partition key `pk`: `DEMO#tracks/peace-i-seek-take-6.m4a` (substitute the song's S3 key).
+- Sort key `sk`: `TOTAL`, `DAY#2026-11-24`, or `PLAY#<event UUID>`.
+- Select index `by-demo-time` and query that partition with a `played_at` range
+  to examine individual plays chronologically. Timestamps use ISO 8601 UTC,
+  e.g. `2026-11-24T00:00:00.000Z` through `2026-11-24T23:59:59.999Z`.
+
+Raw event queries require AWS permissions and have no public API. The handler
+can only insert events, update counters, read totals, and check recording metadata;
+it has no table scan, query, or delete permission. Table creation and endpoint
+deployment run through the existing GitHub Actions deployment on `main`.
+
+The local preview server simulates play totals in memory, with no AWS access.
+Restarting the server clears its counts; use a fresh tab session to test another
+play of the same song. This change adds play storage only; show content continues
+to come from the existing content files.
+
 ## Safety notes
 
 - The content bucket is private and reachable only through CloudFront Origin Access Control.

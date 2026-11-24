@@ -9,8 +9,10 @@ from aws_cdk import (
     aws_certificatemanager as acm,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
+    aws_dynamodb as dynamodb,
     aws_iam as iam,
     aws_lambda as lambda_,
+    aws_logs as logs,
     aws_route53 as route53,
     aws_route53_targets as targets,
     aws_s3 as s3,
@@ -92,6 +94,47 @@ class HumbleChuckSiteStack(Stack):
             conditions={"StringLike": {"s3:prefix": ["tracks/*"]}},
         ))
         catalog_url = catalog.add_function_url(auth_type=lambda_.FunctionUrlAuthType.AWS_IAM)
+
+        play_events = dynamodb.Table(
+            self, "DemoPlayEvents",
+            partition_key=dynamodb.Attribute(name="pk", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(name="sk", type=dynamodb.AttributeType.STRING),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            point_in_time_recovery_specification=dynamodb.PointInTimeRecoverySpecification(
+                point_in_time_recovery_enabled=True,
+            ),
+            removal_policy=RemovalPolicy.RETAIN,
+        )
+        # Only play events have played_at, so counter items stay out of this
+        # index. Query one demo over a timestamp range without scanning.
+        play_events.add_global_secondary_index(
+            index_name="by-demo-time",
+            partition_key=dynamodb.Attribute(name="pk", type=dynamodb.AttributeType.STRING),
+            sort_key=dynamodb.Attribute(name="played_at", type=dynamodb.AttributeType.STRING),
+            projection_type=dynamodb.ProjectionType.ALL,
+        )
+        plays = lambda_.Function(
+            self, "DemosPlays",
+            runtime=lambda_.Runtime.PYTHON_3_13,
+            handler="plays.handler",
+            code=lambda_.Code.from_asset(str(Path(__file__).parent / "demos"), exclude=["__pycache__", "*.pyc"]),
+            memory_size=128,
+            timeout=Duration.seconds(10),
+            reserved_concurrent_executions=2,
+            log_group=logs.LogGroup(self, "DemoPlaysLogs", retention=logs.RetentionDays.ONE_MONTH),
+            environment={"PLAY_EVENTS_TABLE": play_events.table_name, "RECORDINGS_BUCKET": recordings.bucket_name},
+        )
+        # Transactions authorize each underlying operation, not a separate
+        # dynamodb:TransactWriteItems permission. No scan, query, or delete access.
+        plays.add_to_role_policy(iam.PolicyStatement(
+            actions=["dynamodb:PutItem", "dynamodb:UpdateItem", "dynamodb:GetItem"],
+            resources=[play_events.table_arn],
+        ))
+        plays.add_to_role_policy(iam.PolicyStatement(
+            actions=["s3:GetObject", "s3:GetObjectVersion"],
+            resources=[recordings.arn_for_objects("tracks/*")],
+        ))
+        plays_url = plays.add_function_url(auth_type=lambda_.FunctionUrlAuthType.AWS_IAM)
 
         zone = route53.PublicHostedZone(
             self,
@@ -188,6 +231,26 @@ class HumbleChuckSiteStack(Stack):
                 enable_accept_encoding_brotli=True,
             ),
             compress=True,
+        )
+        distribution.add_behavior(
+            "/api/demo-plays",
+            origins.FunctionUrlOrigin.with_origin_access_control(plays_url),
+            viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
+            allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
+            cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
+            origin_request_policy=cloudfront.OriginRequestPolicy(
+                self, "DemoPlaysRequests",
+                query_string_behavior=cloudfront.OriginRequestQueryStringBehavior.allow_list("demo_id"),
+                header_behavior=cloudfront.OriginRequestHeaderBehavior.allow_list("Content-Type", "x-amz-content-sha256"),
+                cookie_behavior=cloudfront.OriginRequestCookieBehavior.none(),
+            ),
+        )
+        plays.add_permission(
+            "CloudFrontInvokeFunction",
+            principal=iam.ServicePrincipal("cloudfront.amazonaws.com"),
+            action="lambda:InvokeFunction",
+            source_arn=distribution.distribution_arn,
+            invoked_via_function_url=True,
         )
         # New function URLs require both invocation permissions. The pinned
         # CDK origin helper grants InvokeFunctionUrl; grant the second here.
@@ -289,6 +352,7 @@ class HumbleChuckSiteStack(Stack):
         CfnOutput(self, "CloudFrontUrl", value=f"https://{distribution.domain_name}")
         CfnOutput(self, "RecordingsBucketName", value=recordings.bucket_name)
         CfnOutput(self, "RecordingsPrefix", value="tracks/")
+        CfnOutput(self, "DemoPlayEventsTableName", value=play_events.table_name)
         CfnOutput(self, "HostedZoneId", value=zone.hosted_zone_id)
         for index in range(4):
             CfnOutput(

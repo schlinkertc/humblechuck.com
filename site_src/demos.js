@@ -14,6 +14,7 @@
   const rewind = find("[data-rewind]");
   const forward = find("[data-forward]");
   const toggle = find("[data-toggle-play]");
+  const playCount = find("[data-play-count]");
   let tracks = [];
   let current = null;
   let loading = false;
@@ -21,6 +22,127 @@
   let playAttempt = 0;
   let songAnchors = new Map();
   let shareTrigger = null;
+  const playStates = new Map();
+  let listening = null;
+  let countRequest = 0;
+
+  function renderCount(id, count) {
+    if (current?.id !== id || !Number.isSafeInteger(count) || count < 0) return;
+    playCount.textContent = `${count.toLocaleString()} ${count === 1 ? "play" : "plays"}`;
+    playCount.hidden = false;
+  }
+
+  async function loadCount(track) {
+    const request = ++countRequest;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    try {
+      const response = await fetch(`/api/demo-plays?demo_id=${encodeURIComponent(track.id)}`, {
+        signal: controller.signal, credentials: "omit", cache: "no-store",
+      });
+      if (!response.ok) return;
+      const data = await response.json();
+      if (request === countRequest) renderCount(track.id, data.plays);
+    } catch { /* Counting must never interfere with listening. */ }
+    finally { clearTimeout(timeout); }
+  }
+
+  function playState(id) {
+    if (!playStates.has(id)) {
+      const state = { seconds: 0, source: null, payload: null, sent: false, attempts: 0, inFlight: false };
+      try {
+        const saved = JSON.parse(sessionStorage.getItem(`hc:demo-play:v1:${id}`));
+        if (saved?.payload?.demo_id === id && typeof saved.payload.event_id === "string") {
+          state.payload = saved.payload;
+          state.sent = saved.sent === true;
+        }
+      } catch { /* Private browsing or disabled storage: use this page's memory. */ }
+      playStates.set(id, state);
+    }
+    return playStates.get(id);
+  }
+
+  function savePlay(state) {
+    try {
+      sessionStorage.setItem(`hc:demo-play:v1:${state.payload.demo_id}`, JSON.stringify({
+        payload: state.payload, sent: state.sent,
+      }));
+    } catch { /* An unavailable session store must not break playback. */ }
+  }
+
+  async function sendPlay(state) {
+    if (!state.payload || state.sent || state.inFlight || state.attempts >= 3) return;
+    state.inFlight = true;
+    state.attempts++;
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 5000);
+    let retry = false;
+    try {
+      const body = JSON.stringify(state.payload);
+      // Lambda function URL origins require a payload hash for CloudFront OAC
+      // to sign POSTs. Hash these exact UTF-8 bytes; no AWS keys reach browsers.
+      const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(body));
+      const hash = Array.from(new Uint8Array(digest), byte => byte.toString(16).padStart(2, "0")).join("");
+      const response = await fetch("/api/demo-plays", {
+        method: "POST", headers: { "Content-Type": "application/json", "x-amz-content-sha256": hash },
+        body, signal: controller.signal, keepalive: true, credentials: "omit",
+      });
+      if (!response.ok) {
+        retry = response.status === 429 || response.status >= 500;
+      } else {
+        const data = await response.json();
+        state.sent = true;
+        savePlay(state);
+        if (current?.id === state.payload.demo_id) {
+          ++countRequest; // An earlier count request must not overwrite this total.
+          renderCount(state.payload.demo_id, data.plays);
+        }
+      }
+    } catch { retry = true; }
+    finally {
+      clearTimeout(timeout);
+      state.inFlight = false;
+      if (retry && state.attempts < 3) setTimeout(() => sendPlay(state), 1000 * state.attempts);
+    }
+  }
+
+  function qualifyPlay(track, state) {
+    if (!state.payload && state.seconds >= 10 && globalThis.crypto?.randomUUID && crypto.subtle) {
+      state.payload = {
+        event_id: crypto.randomUUID(), demo_id: track.id,
+        listened_seconds: Math.round(state.seconds * 100) / 100, page: window.location.pathname,
+      };
+      const version = new URL(track.url, window.location.origin).searchParams.get("versionId");
+      if (version) state.payload.recording_version = version;
+      if (Number.isFinite(audio.duration) && audio.duration > 0) state.payload.duration_seconds = Math.round(audio.duration * 100) / 100;
+      try {
+        const referrer = new URL(document.referrer);
+        if (referrer.hostname !== new URL(window.location.origin).hostname) state.payload.referrer_host = referrer.hostname;
+      } catch { /* No external referrer. */ }
+      savePlay(state); // Persist the ID BEFORE the first request, including retries.
+      sendPlay(state);
+    }
+  }
+
+  function sampleListening() {
+    if (!listening || !current) return;
+    const now = performance.now();
+    const advanced = audio.currentTime - listening.position;
+    const elapsed = Math.max(0, (now - listening.time) / 1000);
+    // Count time while audio advances, capped by elapsed wall time. Seeking,
+    // stalls, pauses, and faster playback cannot manufacture listening time.
+    if (advanced > 0) {
+      const state = playState(current.id);
+      state.seconds += Math.min(advanced / (audio.playbackRate || 1), elapsed);
+      qualifyPlay(current, state);
+    }
+    listening = { position: audio.currentTime, time: now };
+  }
+
+  function stopListening() {
+    sampleListening();
+    listening = null;
+  }
 
   function buildSongAnchors() {
     // Derive links from filenames, so changing a recording's S3 version does
@@ -132,9 +254,17 @@
 
   function select(track, autoplay = false, updateHash = true) {
     const changed = current?.url !== track.url;
+    if (changed) stopListening();
     current = track;
     title.textContent = track.title;
     if (changed) {
+      playCount.hidden = true;
+      loadCount(track);
+      // A previously qualified event may still be awaiting acknowledgement.
+      const state = playState(track.id);
+      if (state.source !== track.url) state.seconds = 0;
+      state.source = track.url;
+      sendPlay(state);
       ++playAttempt;
       needsReload = false;
       audio.src = track.url;
@@ -229,7 +359,10 @@
         if (!latest) {
           if (tracks.length) select(tracks[0], false, false);
           else {
+            stopListening();
             current = null;
+            ++countRequest;
+            playCount.hidden = true;
             audio.removeAttribute("src");
             audio.load();
             title.textContent = "More songs soon.";
@@ -249,6 +382,20 @@
       loading = false;
     }
   }
+
+  audio.addEventListener("playing", () => {
+    listening = { position: audio.currentTime, time: performance.now() };
+  });
+  audio.addEventListener("timeupdate", sampleListening);
+  ["pause", "waiting", "ended", "error"].forEach(event => audio.addEventListener(event, stopListening));
+  ["seeking", "emptied", "ratechange"].forEach(event => audio.addEventListener(event, () => { listening = null; }));
+  const resumeListening = () => {
+    if (!audio.paused && !audio.seeking && audio.readyState >= 3) {
+      listening = { position: audio.currentTime, time: performance.now() };
+    }
+  };
+  audio.addEventListener("seeked", resumeListening);
+  audio.addEventListener("ratechange", resumeListening);
 
   previous.addEventListener("click", () => step(-1));
   toggle.addEventListener("click", () => {

@@ -3,10 +3,11 @@ const assert = require('node:assert/strict');
 const vm = require('node:vm');
 const fs = require('node:fs');
 const path = require('node:path');
+const { webcrypto, createHash } = require('node:crypto');
 
 const source = fs.readFileSync(path.join(__dirname, '../site_src/demos.js'), 'utf8');
 const song = (id, version = '1') => ({ id: `tracks/${id}.m4a`, title: id, filename: `${id}.m4a`, url: `/tracks/${id}.m4a?versionId=${version}` });
-const settle = () => new Promise(resolve => setImmediate(resolve));
+const settle = () => new Promise(resolve => setTimeout(resolve, 10));
 
 class Element {
   constructor() { this.children = []; this.dataset = {}; this.attrs = {}; this.events = {}; this.textContent = ''; }
@@ -26,35 +27,61 @@ async function player(initial = [song('first'), song('second')], options = {}) {
   const find = selector => { if (!nodes.has(selector)) nodes.set(selector, new Element()); return nodes.get(selector); };
   const audio = find('[data-demo-audio]');
   let gesture = false;
+  let now = 0;
   Object.assign(audio, { paused: true, readyState: 0, currentTime: 0, duration: 120, loads: 0, calls: [] });
-  audio.load = () => { audio.loads++; audio.error = null; audio.readyState = 0; audio.paused = true; audio.emit('emptied'); };
+  audio.load = () => { audio.loads++; audio.error = null; audio.readyState = 0; audio.paused = true; audio.currentTime = 0; audio.emit('emptied'); };
   audio.play = () => {
     audio.calls.push({ gesture, src: audio.src });
     assert.equal(gesture, true, 'play must be called synchronously during the tap');
-    audio.paused = false; audio.readyState = 4; audio.emit('play');
+    audio.paused = false; audio.readyState = 4; audio.emit('play'); audio.emit('playing');
     return Promise.resolve();
   };
   audio.pause = () => { audio.paused = true; audio.emit('pause'); };
   let catalog = initial;
   const library = { querySelector: find, scrollIntoView() { library.scrolled = true; } };
-  const document = { hidden: false, querySelector: () => library, createElement: () => new Element(), createDocumentFragment: () => new Element(), addEventListener() {} };
-  const location = { origin: 'https://example.com', hash: options.hash ?? '' };
+  const document = { hidden: false, referrer: options.referrer ?? '', querySelector: () => library, createElement: () => new Element(), createDocumentFragment: () => new Element(), addEventListener() {} };
+  const location = { origin: 'https://example.com', pathname: '/demos', hash: options.hash ?? '' };
   const windowEvents = {};
   const copied = [];
   const navigator = options.navigator ?? { clipboard: { writeText: async text => copied.push(text) } };
+  const storage = options.storage ?? new Map();
+  const requests = [];
+  const timers = new Map();
+  let timerId = 0;
   let poll;
   vm.runInNewContext(source, {
     document, navigator, window: {
       location,
       history: { replaceState(_, __, url) { location.hash = new URL(url).hash; } },
       addEventListener(name, fn) { windowEvents[name] = fn; },
-    }, URL, AbortController,
-    setTimeout: () => 1, clearTimeout() {}, setInterval(fn) { poll = fn; },
-    fetch: async () => ({ ok: true, json: async () => ({ tracks: catalog }) }),
+    }, URL, AbortController, crypto: webcrypto, TextEncoder, Uint8Array,
+    performance: { now: () => now },
+    sessionStorage: {
+      getItem(key) { if (options.blockStorage) throw Error('blocked'); return storage.get(key) ?? null; },
+      setItem(key, value) { if (options.blockStorage) throw Error('blocked'); storage.set(key, value); },
+    },
+    setTimeout(fn, delay) { timers.set(++timerId, { fn, delay }); return timerId; },
+    clearTimeout(id) { timers.delete(id); }, setInterval(fn) { poll = fn; },
+    fetch: async (url, init = {}) => {
+      requests.push({ url, ...init });
+      if (url === '/api/demos') return { ok: true, json: async () => ({ tracks: catalog }) };
+      if (init.method === 'POST' && options.onPlay) return options.onPlay(url, init);
+      if (!init.method && options.onCount) return options.onCount(url, init);
+      return { ok: true, status: 200, json: async () => ({ plays: init.method === 'POST' ? 1 : 0 }) };
+    },
   });
   await settle();
   return {
-    audio, find, location, copied, library,
+    audio, find, location, copied, library, storage, requests,
+    playRequests: () => requests.filter(request => request.method === 'POST'),
+    async listen(seconds, advanced = seconds * (audio.playbackRate || 1)) {
+      now += seconds * 1000; audio.currentTime += advanced; audio.emit('timeupdate'); await settle();
+    },
+    async retry() {
+      const entry = [...timers.entries()].find(([id, timer]) => timer.delay < 5000);
+      assert.ok(entry, 'a bounded retry should be scheduled');
+      timers.delete(entry[0]); entry[1].fn(); await settle();
+    },
     click(element) { gesture = true; try { element.emit('click'); } finally { gesture = false; } },
     rows: () => find('[data-track-list]').querySelectorAll(),
     shares: () => find('[data-track-list]').children.map(row => row.children[1].children[0]),
@@ -184,4 +211,100 @@ test('song links distinguish colliding names and preserve reserved page anchors'
     await p.navigate(new URL(links[i]).hash);
     assert.equal(p.audio.src, items[i].url);
   }
+});
+
+test('a play qualifies after ten seconds, with an exact payload hash and limited attributes', async () => {
+  const p = await player(undefined, { referrer: 'https://instagram.com/private?token=secret' });
+  assert.equal(p.playRequests().length, 0, 'loading and cueing are not plays');
+  p.click(p.find('[data-toggle-play]'));
+  await p.listen(9.5);
+  assert.equal(p.playRequests().length, 0);
+  await p.listen(.5);
+  const request = p.playRequests()[0];
+  const event = JSON.parse(request.body);
+  assert.equal(event.demo_id, song('first').id);
+  assert.equal(event.recording_version, '1');
+  assert.equal(event.listened_seconds, 10);
+  assert.equal(event.duration_seconds, 120);
+  assert.equal(event.page, '/demos');
+  assert.equal(event.referrer_host, 'instagram.com');
+  assert.match(event.event_id, /^[a-f0-9-]{36}$/);
+  assert.equal(request.headers['x-amz-content-sha256'], createHash('sha256').update(request.body).digest('hex'));
+  assert.equal(request.credentials, 'omit');
+  assert.equal(request.keepalive, true);
+  assert.equal(p.find('[data-play-count]').textContent, '1 play');
+  await p.listen(30);
+  assert.equal(p.playRequests().length, 1);
+});
+
+test('pauses, buffering and seeks do not count as listening; resuming keeps progress', async () => {
+  const p = await player(); p.click(p.find('[data-toggle-play]'));
+  await p.listen(4);
+  p.audio.pause(); await p.listen(60, 0);
+  p.click(p.find('[data-toggle-play]')); await p.listen(2);
+  p.audio.emit('waiting'); await p.listen(60, 0);
+  p.audio.emit('playing');
+  p.audio.emit('seeking'); p.audio.currentTime = 90; p.audio.emit('timeupdate'); p.audio.emit('seeked');
+  await p.listen(3);
+  assert.equal(p.playRequests().length, 0);
+  await p.listen(1);
+  assert.equal(p.playRequests().length, 1);
+  assert.equal(JSON.parse(p.playRequests()[0].body).listened_seconds, 10);
+});
+
+test('listening is measured per track and faster playback cannot qualify early', async () => {
+  const p = await player(); p.click(p.find('[data-toggle-play]'));
+  await p.listen(6);
+  p.click(p.rows()[1]); await p.listen(5);
+  assert.equal(p.playRequests().length, 0);
+  p.audio.playbackRate = 2; p.audio.emit('ratechange');
+  await p.listen(5);
+  assert.equal(p.playRequests().length, 1);
+  assert.equal(JSON.parse(p.playRequests()[0].body).demo_id, song('second').id);
+  p.click(p.rows()[0]); await p.listen(4);
+  assert.equal(p.playRequests().length, 2);
+});
+
+test('qualified plays survive reloads in the same session and pending retries reuse IDs', async () => {
+  const p = await player(); p.click(p.find('[data-toggle-play]')); await p.listen(10);
+  const reloaded = await player(undefined, { storage: p.storage });
+  reloaded.click(reloaded.find('[data-toggle-play]')); await reloaded.listen(10);
+  assert.equal(reloaded.playRequests().length, 0, 'already acknowledged in this session');
+
+  const failed = await player(undefined, { onPlay: async () => { throw Error('offline'); } });
+  failed.click(failed.find('[data-toggle-play]')); await failed.listen(10);
+  const pending = await player(undefined, { storage: failed.storage });
+  assert.equal(pending.playRequests()[0].body, failed.playRequests()[0].body);
+});
+
+test('failed requests retry at most three times without inflating or interrupting playback', async () => {
+  const p = await player(undefined, { onPlay: async () => ({ ok: false, status: 503 }) });
+  p.click(p.find('[data-toggle-play]')); await p.listen(10);
+  await p.listen(1);
+  assert.equal(p.playRequests().length, 1, 'timeupdate events must respect the scheduled retry');
+  await p.retry(); await p.retry(); await p.listen(10);
+  assert.equal(p.playRequests().length, 3);
+  assert.equal(new Set(p.playRequests().map(r => r.body)).size, 1);
+  assert.equal(p.audio.paused, false);
+  assert.equal(p.find('[data-demo-status]').textContent, '');
+});
+
+test('unavailable browser storage and count service do not break the player', async () => {
+  const p = await player(undefined, { blockStorage: true, onCount: async () => { throw Error('offline'); } });
+  assert.equal(p.find('[data-play-count]').hidden, true);
+  p.click(p.find('[data-toggle-play]')); await p.listen(10);
+  assert.equal(p.playRequests().length, 1);
+  assert.equal(p.find('[data-demo-status]').textContent, '');
+});
+
+test('late counts cannot replace a newly recorded total or a different track count', async () => {
+  const replies = [];
+  const p = await player(undefined, { onCount: () => new Promise(resolve => replies.push(resolve)) });
+  p.click(p.find('[data-toggle-play]')); await p.listen(10);
+  replies[0]({ ok: true, json: async () => ({ plays: 0 }) }); await settle();
+  assert.equal(p.find('[data-play-count]').textContent, '1 play');
+  p.click(p.rows()[1]);
+  assert.equal(p.find('[data-play-count]').hidden, true);
+  replies[1]({ ok: true, json: async () => ({ plays: 20 }) }); await settle();
+  assert.equal(p.find('[data-play-count]').textContent, '20 plays');
 });

@@ -9,19 +9,68 @@ import os
 from pathlib import Path
 import re
 import sys
-from urllib.parse import unquote, urlsplit
+from threading import Lock
+from urllib.parse import parse_qs, unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(ROOT))
 from infrastructure.demos.catalog import track_from_object
+from infrastructure.demos import plays
 
 SEED = Path(os.environ.get("DEMO_PREVIEW_RECORDINGS_DIR", ROOT / "recordings" / "seed"))
+PLAY_EVENTS = set()
+PLAY_COUNTS = {}
+PLAY_LOCK = Lock()
 
 
 class PreviewHandler(SimpleHTTPRequestHandler):
+    def json_response(self, status, data):
+        body = json.dumps(data).encode()
+        self.send_response(status)
+        self.send_header("Content-Type", "application/json")
+        self.send_header("Content-Length", str(len(body)))
+        self.send_header("Cache-Control", "no-store")
+        self.end_headers()
+        self.wfile.write(body)
+
+    def do_POST(self):
+        if urlsplit(self.path).path != "/api/demo-plays":
+            self.send_error(404)
+            return
+        try:
+            length = int(self.headers.get("Content-Length", "0"))
+            if not 0 < length <= 4096:
+                raise ValueError("Invalid body length")
+            item, _ = plays.parse_play({"headers": dict(self.headers), "body": self.rfile.read(length).decode()})
+        except (ValueError, TypeError, UnicodeError):
+            self.json_response(400, {"error": "Invalid play event."})
+            return
+        key = item["demo_id"]["S"]
+        filename = key.removeprefix("tracks/")
+        if "/" in filename or not (SEED / filename).is_file():
+            self.json_response(404, {"error": "Recording not found."})
+            return
+        with PLAY_LOCK:
+            event_key = (key, item["event_id"]["S"])
+            recorded = event_key not in PLAY_EVENTS
+            if recorded:
+                PLAY_EVENTS.add(event_key)
+                PLAY_COUNTS[key] = PLAY_COUNTS.get(key, 0) + 1
+            count = PLAY_COUNTS.get(key, 0)
+        self.json_response(200, {"demo_id": key, "plays": count, "recorded": recorded})
+
     def do_GET(self):
         path = unquote(urlsplit(self.path).path)
-        if path == "/api/demos":
+        if path == "/api/demo-plays":
+            try:
+                key = plays.demo_key(parse_qs(urlsplit(self.path).query).get("demo_id", [None])[0])
+            except (ValueError, TypeError, UnicodeError):
+                self.json_response(400, {"error": "Invalid demo ID."})
+                return
+            with PLAY_LOCK:
+                count = PLAY_COUNTS.get(key, 0)
+            self.json_response(200, {"demo_id": key, "plays": count})
+        elif path == "/api/demos":
             tracks = []
             for file in sorted(SEED.iterdir()):
                 if not file.is_file():

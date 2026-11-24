@@ -3,6 +3,7 @@ import shutil
 from collections import defaultdict
 from datetime import date
 from html import escape
+from hashlib import sha256
 from pathlib import Path
 from string import Template
 from urllib.parse import urlencode
@@ -215,7 +216,10 @@ def build() -> Path:
             "introduction": escape(content["contact"]["introduction"]),
         },
     )
-    demos = render_template("demos.html", shared)
+    demos_version = sha256((SOURCE / "demos.js").read_bytes()).hexdigest()[:16]
+    demos = render_template("demos.html", {
+        **shared, "demos_script_url": f"/demos.js?v={demos_version}",
+    })
 
     if OUTPUT.exists():
         shutil.rmtree(OUTPUT)

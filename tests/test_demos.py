@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from hashlib import sha256
 import json
 import sys
 from types import SimpleNamespace
@@ -72,7 +73,8 @@ def test_demos_build_has_player_and_no_bundled_recordings():
     output = build()
     demos = (output / "demos" / "index.html").read_text()
     assert "<audio controls" in demos
-    assert 'src="/demos.js"' in demos
+    version = sha256((output / "demos.js").read_bytes()).hexdigest()[:16]
+    assert f'src="/demos.js?v={version}"' in demos
     assert 'preload="none"' in demos
     assert 'data-toggle-play' in demos
     assert 'data-refresh' not in demos
